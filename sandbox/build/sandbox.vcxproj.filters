@@ -4,12 +4,6 @@
     <ClCompile Include="C:\SE\Personal\lib_cpp\sandbox\sandbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\SE\Personal\lib_cpp\timing\cycle_timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\SE\Personal\lib_cpp\timing\scoped_timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="C:\SE\Personal\lib_cpp\timing\timing_archive.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

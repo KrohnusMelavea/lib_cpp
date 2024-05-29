@@ -318,8 +318,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\SE\Personal\lib_cpp\sandbox\sandbox.cpp" />
-    <ClCompile Include="C:\SE\Personal\lib_cpp\timing\cycle_timer.cpp" />
-    <ClCompile Include="C:\SE\Personal\lib_cpp\timing\scoped_timer.cpp" />
     <ClCompile Include="C:\SE\Personal\lib_cpp\timing\timing_archive.cpp" />
   </ItemGroup>
   <ItemGroup>
