@@ -4,10 +4,12 @@
 
 int main() {
  {
-  timing::scoped_timer a([](timing::timing_archive_entry const& timing_archive_entry) { 
-   timing::GLOBAL_TIMING_ARCHIVE.update(timing_archive_entry);
-   SPDLOG_INFO("world");
-   });
-   SPDLOG_INFO("hello");
+  timing::cycle_timer timer(timing::timing_archive::global_callback);
+  for (u32 i = 0; i < 10; ++i) {
+   for (u32 j = 0; j < 1000000000; ++j) {
+    
+   }
+   SPDLOG_INFO("{}", timer.lap().count());
+  }
  }
 }

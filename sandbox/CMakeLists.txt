@@ -15,4 +15,7 @@ add_executable(sandbox sandbox.cpp
     ../timing/timing_archive.cpp
 )
 target_link_libraries(sandbox ws2_32.lib)
-target_compile_definitions(sandbox PRIVATE _DEBUG)
+target_compile_definitions(sandbox PRIVATE
+ _DEBUG
+ CREATE_GLOBAL_TIMING_ARCHIVE
+ )

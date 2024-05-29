@@ -11,7 +11,9 @@ namespace timing {
   }
  }
 
- #ifdef CREATE_GLOBAL_TIMING_ARCHIVE
-  timing_archive GLOBAL_TIMING_ARCHIVE;
- #endif
+ void timing_archive::callback(timing_archive& timing_archive, timing_archive_entry const& timing_archive_entry) noexcept { timing_archive.update(timing_archive_entry); }
+#ifdef CREATE_GLOBAL_TIMING_ARCHIVE
+ void timing_archive::global_callback(timing_archive_entry const& timing_archive_entry) noexcept { GLOBAL_TIMING_ARCHIVE.update(timing_archive_entry); } 
+ timing_archive GLOBAL_TIMING_ARCHIVE{};
+#endif
 }
