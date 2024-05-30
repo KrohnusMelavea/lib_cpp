@@ -6,14 +6,17 @@
 #include <source_location>
 
 namespace timing {
- class scoped_timer {
+ template <typename callback_t> class scoped_timer {
  public:
   using time_point_t = std::chrono::steady_clock::time_point;
-  using callback_t = std::function<void (timing_archive_entry const&)>;
 
-  scoped_timer(std::source_location const& source_location = std::source_location::current()) noexcept;
-  scoped_timer(callback_t callback, std::source_location const& source_location = std::source_location::current()) noexcept;
-  ~scoped_timer() noexcept;
+  scoped_timer(std::source_location const& source_location = std::source_location::current()) noexcept : m_callback{nullptr}, m_source_location{source_location}, m_start_time{std::chrono::steady_clock::now()} {}
+  scoped_timer(callback_t callback, std::source_location const& source_location = std::source_location::current()) noexcept : m_callback{callback}, m_source_location{source_location}, m_start_time{std::chrono::steady_clock::now()} {}
+  ~scoped_timer() noexcept {
+  if (m_callback) [[likely]] {
+   m_callback(timing_archive_entry{m_source_location});
+  }
+ }
 
  private:
   callback_t m_callback;

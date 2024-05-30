@@ -1,13 +1,11 @@
 #include "types.hpp"
-#include "timing/core.hpp"
+#include "timing/scoped_timer.hpp"
+#include "timing/timing_archive.hpp"
 #include <spdlog/spdlog.h>
 
 int main() {
- {
-  timing::scoped_timer a([](timing::timing_archive_entry const& timing_archive_entry) { 
-   timing::GLOBAL_TIMING_ARCHIVE.update(timing_archive_entry);
-   SPDLOG_INFO("world");
-   });
-   SPDLOG_INFO("hello");
+ for (u32 i = 0; i < 1024; ++i) {
+  timing::scoped_timer timer(timing::timing_archive::global_callback);
+  for (u32 j = 0; j < 1000000; ++j) { }
  }
 }
