@@ -11,6 +11,8 @@ include_directories(sandbox
 )
 add_executable(sandbox sandbox.cpp
     ../timing/timing_archive.cpp
+    ../timing/cycle_timer.cpp
+    ../timing/scoped_timer.cpp
 )
 target_link_libraries(sandbox ws2_32.lib)
 target_compile_definitions(sandbox PRIVATE

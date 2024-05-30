@@ -1,31 +1,52 @@
 #pragma once
 
+#include "types.hpp"
+#include "stl/source_location.hpp"
 #include "stl/rotating_static_array.hpp"
 #include <chrono>
-#include <source_location>
 
 namespace timing {
  struct timing_archive_entry {
-  std::source_location const source_location;
-  stl::rotating_static_array<std::chrono::nanoseconds, 512> timings{1};
-  u64 min;
-  u64 max;
-  u64 avg;
+  using timing_t = std::chrono::nanoseconds;
 
-  void update_timings(std::chrono::nanoseconds const& new_timing) noexcept {
-   auto const new_time = static_cast<u64>(new_timing.count());
-   if (timings.full()) [[likely]] {
-    auto const front_time = static_cast<u64>(timings.front().count());
-    avg = (avg * std::size(timings) + new_time - front_time) / std::size(timings);
-   } else [[unlikely]] {
-    avg = (avg * std::size(timings) + new_time) / (std::size(timings) + 1);
-   }
-   if (new_time < min) [[unlikely]] { min = new_time; }
-   if (new_time > max) [[unlikely]] { max = new_time; }
-   timings.push(new_timing);
+  stl::source_location source_location;
+  stl::rotating_static_array<timing_t, 512> timings{1};
+  timing_t min;
+  timing_t max;
+  timing_t avg;
+
+  constexpr timing_archive_entry() noexcept = default;
+  constexpr timing_archive_entry(stl::source_location const& source_location, timing_t const timing) noexcept : source_location{source_location}, min{timing}, max{timing}, avg{timing} { timings[0] = timing; }
+
+  constexpr timing_archive_entry(timing_archive_entry const& timing_archive_entry) noexcept : source_location{timing_archive_entry.source_location}, timings{timing_archive_entry.timings}, min{timing_archive_entry.min}, max{timing_archive_entry.max}, avg{timing_archive_entry.avg} {}
+  constexpr timing_archive_entry(timing_archive_entry&& timing_archive_entry) noexcept : source_location{timing_archive_entry.source_location}, timings{std::move(timing_archive_entry.timings)}, min{timing_archive_entry.min}, max{timing_archive_entry.max}, avg{timing_archive_entry.avg} { }
+
+  constexpr auto& operator= (timing_archive_entry const& timing_archive_entry) noexcept {
+   source_location = timing_archive_entry.source_location;
+   timings = timing_archive_entry.timings;
+   min = timing_archive_entry.min;
+   max = timing_archive_entry.max;
+   avg = timing_archive_entry.avg;
+   return *this;
+  }
+  constexpr auto& operator= (timing_archive_entry&& timing_archive_entry) noexcept {
+   source_location = timing_archive_entry.source_location;
+   timings = std::move(timing_archive_entry.timings);
+   min = timing_archive_entry.min;
+   max = timing_archive_entry.max;
+   avg = timing_archive_entry.avg;
+   return *this;
   }
 
-  inline constexpr auto operator==(auto const& other) const noexcept { return source_location.line() == other.source_location.line() && source_location.column() == other.source_location.column() && source_location.file_name() == other.source_location.file_name() && source_location.function_name() == other.source_location.function_name(); }
+  void update_timings(timing_t const new_timing) noexcept {
+   if (timings.full()) [[likely]] {
+    avg = (avg * std::size(timings) + new_timing - timings.front()) / std::size(timings);
+   } else [[unlikely]] {
+    avg = (avg * std::size(timings) + new_timing) / (std::size(timings) + 1);
+   }
+   if (new_timing < min) [[unlikely]] { min = new_timing; }
+   if (new_timing > max) [[unlikely]] { max = new_timing; }
+   timings.push(new_timing);
+  }
  };
-
 }

@@ -9,7 +9,7 @@
 namespace stl {
  template <class T> class dynamic_array {
  public:
-  dynamic_array() noexcept : m_data{nullptr}, m_size{0} {}
+  dynamic_array() noexcept = default;
   dynamic_array(T* const data, std::size_t const size) noexcept : m_data{data}, m_size{size} {}
   dynamic_array(std::size_t const size) noexcept : m_data{new T[size]}, m_size{size} {}
   dynamic_array(dynamic_array const& dynamic_array) noexcept : m_data{std::memcpy(new T[dynamic_array.m_size], dynamic_array.m_data, dynamic_array.m_size)}, m_size{dynamic_array.m_size} {}
@@ -32,15 +32,13 @@ namespace stl {
   }
 
   void push_back(T const& value) noexcept {
-   auto new_data = reinterpret_cast<T*>(std::memcpy(new T[m_size + 1], m_data, m_size));
+   auto new_data = new T[m_size + 1];
+
+   for (std::size_t i = 0; i < m_size; ++i) {
+    new_data[i] = std::move(m_data[i]);
+   }
    delete[] m_data;
    new_data[m_size++] = value;
-   m_data = new_data;
-  }
-  void push_front(T const& value) noexcept {
-   auto new_data = reinterpret_cast<T*>(std::memcpy(new T[m_size + 1] + 1, m_data, m_size++) - 1);
-   delete[] m_data;
-   *new_data = value;
    m_data = new_data;
   }
 

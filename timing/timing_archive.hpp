@@ -2,8 +2,8 @@
 
 #include "timing_archive_entry.hpp"
 #include "stl/dynamic_array.hpp"
+#include "stl/source_location.hpp"
 #include <chrono>
-#include <source_location>
 
 namespace timing {
  class timing_archive;
@@ -13,11 +13,13 @@ namespace timing {
 
  class timing_archive {
  public:
-  void update(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept;
+  using timing_t = std::chrono::nanoseconds;
 
-  static void callback(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept;
+  void update(stl::source_location const& source_location, timing_t const timing) noexcept;
+
+  static void callback(timing_archive& timing_archive, stl::source_location const& source_location, timing_t const timing) noexcept;
 #ifdef CREATE_GLOBAL_TIMING_ARCHIVE
-  static void global_callback(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept;
+  static void global_callback(stl::source_location const& source_location, timing_t const timing) noexcept;
 #endif
 
  private:
