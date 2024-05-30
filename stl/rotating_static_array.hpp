@@ -8,7 +8,8 @@
 namespace stl {
  template <class T, std::size_t array_size> class rotating_static_array {
  public:
-  constexpr rotating_static_array() : m_data{}, m_index{}, m_capacity{} {}
+  constexpr rotating_static_array() noexcept : m_data{}, m_index{}, m_capacity{} {}
+  constexpr rotating_static_array(std::size_t const init_size) noexcept : m_data{}, m_index{}, m_capacity{init_size} {}
 
   constexpr void push(T const& value) noexcept { 
    if (m_capacity == array_size) [[likely]] {
@@ -31,6 +32,9 @@ namespace stl {
   [[nodiscard]] inline constexpr auto const& front() const noexcept { return m_data[m_index]; }
   [[nodiscard]] inline constexpr auto& back() noexcept { return m_data[(m_index + m_capacity - 1) % m_capacity]; }
   [[nodiscard]] inline constexpr auto const& back() const noexcept { return m_data[(m_index + m_capacity - 1) % m_capacity]; } 
+
+  [[nodiscard]] inline constexpr auto full() const noexcept { return m_capacity == array_size; }
+  [[nodiscard]] inline constexpr auto empty() const noexcept { return m_capacity == 0; }
 
   [[nodiscard]] inline constexpr auto data() noexcept { return m_data; }
   [[nodiscard]] inline constexpr auto const data() const noexcept { return m_data; }

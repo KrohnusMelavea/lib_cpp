@@ -2,12 +2,12 @@
 #include <algorithm>
 
 namespace timing {
- void timing_archive::update(timing_archive_entry const& timing_archive_entry) noexcept {
-  auto timing_archive_entry_it = std::find_if(std::begin(m_timing_archive_entries), std::end(m_timing_archive_entries), [&timing_archive_entry](auto const& m_timing_archive_entry) { return timing_archive_entry == m_timing_archive_entry; });
+ void timing_archive::update(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept {
+  auto timing_archive_entry_it = std::find_if(std::begin(m_timing_archive_entries), std::end(m_timing_archive_entries), [&source_location](auto const& m_timing_archive_entry) { return m_timing_archive_entry == source_location; });
   if (timing_archive_entry_it == std::end(m_timing_archive_entries)) [[unlikely]] {
-   m_timing_archive_entries.push_back(timing_archive_entry);
+   m_timing_archive_entries.push_back();
   } else {
-   
+   m_timing_archive_
   }
  }
 

@@ -13,11 +13,11 @@ namespace timing {
 
  class timing_archive {
  public:
-  void update(timing_archive_entry const& timing_archive_entry) noexcept;
+  void update(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept;
 
-  static void callback(timing_archive& timing_archive, timing_archive_entry const& timing_archive_entry) noexcept;
+  static void callback(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept;
 #ifdef CREATE_GLOBAL_TIMING_ARCHIVE
-  static void global_callback(timing_archive_entry const& timing_archive_entry) noexcept;
+  static void global_callback(std::source_location const& source_location, std::chrono::nanoseconds const timing) noexcept;
 #endif
 
  private:
