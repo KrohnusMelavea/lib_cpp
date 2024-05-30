@@ -32,3 +32,5 @@
 *.app
 
 /.vscode/
+/sandbox/build/
+/sandbox/bin/
