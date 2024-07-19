@@ -7,7 +7,7 @@ namespace timing {
   if (timing_archive_entry_it == std::end(m_timing_archive_entries)) [[unlikely]] {
    m_timing_archive_entries.push_back();
   } else {
-   m_timing_archive_
+   m_timing_archive_entries
   }
  }
 

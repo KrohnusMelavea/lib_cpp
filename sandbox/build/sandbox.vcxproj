@@ -318,7 +318,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\SE\Personal\lib_cpp\sandbox\sandbox.cpp" />
-    <ClCompile Include="C:\SE\Personal\lib_cpp\timing\timing_archive.cpp" />
+    <ClCompile Include="C:\SE\Personal\lib_cpp\net\socket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="C:\SE\Personal\lib_cpp\sandbox\build\ZERO_CHECK.vcxproj">

@@ -1,9 +1,14 @@
 #pragma once
 
+#define NET_HANDLE_ERR
+
 #include "types.hpp"
 #include "socket_error_code.hpp"
 #include "stl/buffer.hpp"
 #include "stl/dynamic_array.hpp"
+#include "stl/status_type.hpp"
+#include "net/ip_header.hpp"
+#include "net/address_conversion.hpp"
 #include <span>
 #include <expected>
 #include <string_view>
@@ -11,32 +16,50 @@
 struct WSAData;
 
 namespace net {
-    class socket {
-    public:
-        socket() noexcept;
-        constexpr socket(u64 const socket, u32 const host, u16 const port) noexcept : m_socket{socket}, m_host{host}, m_port{port} { }
-        ~socket() noexcept;
+ class socket;
 
-        socket_error_code bind(u32 const host, u16 const port) noexcept;
-        std::expected<u32, socket_error_code> send(stl::buffer const& data) const noexcept;
-        std::expected<u32, net::socket_error_code> send(std::string_view const data) const noexcept;
-        socket_error_code close() const noexcept;
-        [[nodiscard]] std::expected<socket, socket_error_code> accept() const noexcept;
-        socket_error_code listen() const noexcept;
-        socket_error_code connect(u32 const host, u16 const port) const noexcept;
-        std::expected<u32, socket_error_code> receive(stl::buffer data) const noexcept;
-        socket_error_code shutdown() const noexcept;
+ #ifdef NET_HANDLE_ERR
+  typedef stl::status_type<socket_error_code> sock_err_ret_t;
+  typedef stl::status_type<socket_error_code, u32> sock_err_u32_ret_t;
+  typedef stl::status_type<socket_error_code, socket> sock_err_sock_ret_t;
+ #else
+  typedef void sock_err_ret_t;
+  typedef u32 sock_err_u32_ret_t;
+  typedef socket sock_err_sock_ret_t;
+ #endif
 
-        static socket_error_code init_backend() noexcept;
-        static socket_error_code deinit_backend() noexcept;
+ struct socket {
+ public:
+  u64 socket_handle;
+  u32 host;
+  u16 port;
+  net::protocol protocol;
 
-    private:
-        u64 m_socket;
-        u32 m_host;
-        u16 m_port;
+  socket() noexcept;   /* Default to TCP localhost:6969 */
+  socket(u32 const host) noexcept;
+  socket(u32 const host, net::protocol const protocol) noexcept;
+  socket(u32 const host, u16 const port) noexcept;
+  socket(u32 const host, u16 const port, net::protocol const protocol) noexcept;
+  constexpr socket(u64 const socket, u32 const host, u16 const port, net::protocol const protocol) noexcept : socket_handle{socket}, host{host}, port{port}, protocol{protocol} {}
+  ~socket() noexcept;
 
-        static WSAData wsa_data;
-        static constexpr bool is_reference_counting = false;
-        static inline u32 reference_count = 0;
-    };
+  sock_err_ret_t bind() const noexcept;
+  sock_err_ret_t bind(u32 const host, u16 const port) noexcept;
+  sock_err_u32_ret_t send(stl::buffer const& data) const noexcept;
+  sock_err_u32_ret_t send(std::string_view const data) const noexcept;
+  sock_err_ret_t close() noexcept;
+  [[nodiscard]] sock_err_sock_ret_t accept() const noexcept;
+  sock_err_ret_t listen() const noexcept;
+  sock_err_ret_t connect(u32 const host, u16 const port) noexcept;
+  sock_err_u32_ret_t receive(stl::buffer data) const noexcept;
+  sock_err_ret_t shutdown() noexcept;
+
+  static sock_err_ret_t init_backend() noexcept;
+  static sock_err_ret_t deinit_backend() noexcept;
+
+ private:
+  static WSAData wsa_data;
+  static constexpr bool is_reference_counting = false;
+  static inline u32 reference_count = 0;
+ };
 }
