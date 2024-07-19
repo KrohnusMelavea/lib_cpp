@@ -4,12 +4,38 @@
 #include "iterator_sentinel.hpp"
 #include "rotating_array_iterator.hpp"
 #include "rotating_array_const_iterator.hpp"
+#include <type_traits>
+#include <ranges>
 
 namespace stl {
  template <class T, std::size_t array_size> class rotating_static_array {
  public:
-  constexpr rotating_static_array() noexcept : m_data{}, m_index{}, m_capacity{} {}
+  constexpr rotating_static_array() noexcept = default;
   constexpr rotating_static_array(std::size_t const init_size) noexcept : m_data{}, m_index{}, m_capacity{init_size} {}
+
+  constexpr rotating_static_array(rotating_static_array const& rotating_static_array) noexcept : m_index{rotating_static_array.m_index}, m_capacity{rotating_static_array.m_capacity} {
+   for (std::size_t i = 0; i < array_size; ++i) {
+    m_data[i] = rotating_static_array.m_data[i];
+   }
+  }
+  constexpr rotating_static_array(rotating_static_array&& rotating_static_array) noexcept : m_index{rotating_static_array.m_index}, m_capacity{rotating_static_array.m_capacity} {
+   for (std::size_t i = 0; i < array_size; ++i) {
+    m_data[i] = std::move(rotating_static_array.m_data[i]);
+   }
+  }
+
+  constexpr auto& operator= (rotating_static_array const& rotating_static_array) noexcept {
+   for (std::size_t i = 0; i < array_size; ++i) {
+    m_data[i] = rotating_static_array.m_data[i];
+   }
+   return *this;
+  }
+  constexpr auto& operator= (rotating_static_array&& rotating_static_array) noexcept {
+   for (std::size_t i = 0; i < array_size; ++i) {
+    m_data[i] = std::move(rotating_static_array.m_data[i]);
+   }
+   return *this;
+  }
 
   constexpr void push(T const& value) noexcept { 
    if (m_capacity == array_size) [[likely]] {

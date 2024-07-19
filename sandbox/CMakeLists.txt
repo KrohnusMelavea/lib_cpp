@@ -10,7 +10,13 @@ include_directories(sandbox
     c:/se/libraries/c++/spdlog/include/
 )
 add_executable(sandbox sandbox.cpp
+<<<<<<< HEAD
     ../net/socket.cpp
+=======
+    ../timing/timing_archive.cpp
+    ../timing/cycle_timer.cpp
+    ../timing/scoped_timer.cpp
+>>>>>>> 566a871c1a4560b89fe6c64ecf3c386d67d812bf
 )
 target_link_libraries(sandbox ws2_32.lib)
 target_compile_definitions(sandbox PRIVATE
