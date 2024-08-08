@@ -50,6 +50,7 @@ namespace net {
   sock_err_ret_t close() noexcept;
   [[nodiscard]] sock_err_sock_ret_t accept() const noexcept;
   sock_err_ret_t listen() const noexcept;
+  sock_err_ret_t connect() const noexcept;
   sock_err_ret_t connect(u32 const host, u16 const port) noexcept;
   sock_err_u32_ret_t receive(stl::buffer data) const noexcept;
   sock_err_ret_t shutdown() noexcept;
