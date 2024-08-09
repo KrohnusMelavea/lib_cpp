@@ -16,7 +16,7 @@
 struct WSAData;
 
 namespace net {
- class socket;
+ struct socket;
 
  #ifdef NET_HANDLE_ERR
   typedef stl::status_type<socket_error_code> sock_err_ret_t;
