@@ -1,2 +1,2 @@
 import requests
-requests.get("http://localhost/index.php")
+requests.get("http://localhost:81/index.php")

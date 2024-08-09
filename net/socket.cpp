@@ -1,11 +1,13 @@
 #define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 
 #include "socket.hpp"
+#pragma warning(push, 0)
 #include <spdlog/spdlog.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <string_view>
 #include <iostream>
+#pragma warning(pop)
 
 /*
 WinSock:
@@ -74,7 +76,7 @@ namespace net {
  sock_err_ret_t socket::bind() const noexcept {
   ::sockaddr_in const sockaddr_in {
    .sin_family = AF_INET,
-   .sin_port = this->port,
+   .sin_port = static_cast<u16>(((this->port & 0xff) << 8) | (this->port >> 8)),
    .sin_addr = {
     .S_un = {
      .S_addr = this->host
@@ -105,7 +107,7 @@ namespace net {
   this->port = port;
   ::sockaddr_in const sockaddr_in {
    .sin_family = AF_INET,
-   .sin_port = port,
+   .sin_port = static_cast<u16>(((port & 0xff) << 8) | (port >> 8)),
    .sin_addr = {
     .S_un = {
      .S_addr = host
