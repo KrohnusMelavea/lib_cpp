@@ -14,7 +14,7 @@ namespace net {
     address = (address & 0xFFFFFF00) | ((address & 0xFF) * 10 + (c - '0'));
    }
   }
-  return (address << 24) | ((address << 8) & 0xFF0000) | ((address >> 8) & 0xFF00) | (address >> 24); // reverse
+  return (address << 24) | ((address << 8) & 0xFF0000) | ((address >> 8) & 0xFF00) | (address >> 24);
  }
  [[nodiscard]] inline std::string convert_ipv4_u32_to_string(u32 const address) {
   static char buffer[16];

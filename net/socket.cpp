@@ -5,6 +5,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <string_view>
+#include <iostream>
 
 /*
 WinSock:
@@ -34,7 +35,7 @@ namespace net {
    }
   #endif
  }
- socket::socket(u32 const host) noexcept : socket_handle{::socket(AF_INET, SOCK_RAW, static_cast<i32>(protocol::tcp))}, host{host}, port{0}, protocol{net::protocol::tcp} {
+ socket::socket(u32 const host) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{0}, protocol{net::protocol::tcp} {
   #ifdef NET_HANDLE_ERR
    if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
@@ -42,7 +43,7 @@ namespace net {
    }
   #endif
  }
- socket::socket(u32 const host, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_RAW, static_cast<i32>(protocol))}, host{host}, port{0}, protocol{protocol} {
+ socket::socket(u32 const host, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol))}, host{host}, port{0}, protocol{protocol} {
   #ifdef NET_HANDLE_ERR
    if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
@@ -50,7 +51,7 @@ namespace net {
    }
   #endif
  }
- socket::socket(u32 const host, u16 const port) noexcept : socket_handle{::socket(AF_INET, SOCK_RAW, static_cast<i32>(protocol::tcp))}, host{host}, port{port}, protocol{net::protocol::tcp} {
+ socket::socket(u32 const host, u16 const port) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{port}, protocol{net::protocol::tcp} {
   #ifdef NET_HANDLE_ERR
    if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
@@ -58,7 +59,7 @@ namespace net {
    }
   #endif
  }
- socket::socket(u32 const host, u16 const port, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_RAW, static_cast<i32>(protocol))}, host{host}, port{port}, protocol{protocol} {
+ socket::socket(u32 const host, u16 const port, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol))}, host{host}, port{port}, protocol{protocol} {
   #ifdef NET_HANDLE_ERR
    if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
@@ -73,10 +74,10 @@ namespace net {
  sock_err_ret_t socket::bind() const noexcept {
   ::sockaddr_in const sockaddr_in {
    .sin_family = AF_INET,
-   .sin_port = port,
+   .sin_port = this->port,
    .sin_addr = {
     .S_un = {
-     .S_addr = host
+     .S_addr = this->host
     }
    }
   };
