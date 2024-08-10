@@ -3,12 +3,12 @@
 #define NET_HANDLE_ERR
 
 #include "types.hpp"
+#include "ip_header.hpp"
 #include "socket_error_code.hpp"
+#include "address_conversion.hpp"
 #include "stl/buffer.hpp"
-#include "stl/dynamic_array.hpp"
 #include "stl/status_type.hpp"
-#include "net/ip_header.hpp"
-#include "net/address_conversion.hpp"
+#include "stl/dynamic_array.hpp"
 #include <span>
 #include <expected>
 #include <string_view>
@@ -44,15 +44,13 @@ namespace net {
   ~socket() noexcept;
 
   sock_err_ret_t bind() const noexcept;
-  sock_err_ret_t bind(u32 const host, u16 const port) noexcept;
-  sock_err_u32_ret_t send(stl::buffer const& data) const noexcept;
-  sock_err_u32_ret_t send(std::string_view const data) const noexcept;
+  stl::status_type<net::socket_error_code> send(stl::buffer const& data) const noexcept;
+  stl::status_type<net::socket_error_code> send(std::string_view const data) const noexcept;
   sock_err_ret_t close() noexcept;
   [[nodiscard]] sock_err_sock_ret_t accept() const noexcept;
   sock_err_ret_t listen() const noexcept;
   sock_err_ret_t connect() const noexcept;
-  sock_err_ret_t connect(u32 const host, u16 const port) noexcept;
-  sock_err_u32_ret_t receive(stl::buffer data) const noexcept;
+  stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> receive() const noexcept;
   sock_err_ret_t shutdown() noexcept;
 
   static sock_err_ret_t init_backend() noexcept;

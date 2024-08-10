@@ -1,10 +1,9 @@
-#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
-
 #include "socket.hpp"
 #pragma warning(push, 0)
 #include <spdlog/spdlog.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <array>
 #include <string_view>
 #include <iostream>
 #pragma warning(pop)
@@ -99,75 +98,43 @@ namespace net {
    return socket_error_code::success;
   #endif
  }
- #pragma warning(push)
- #pragma warning(disable : 4458)
- sock_err_ret_t socket::bind(u32 const host, u16 const port) noexcept {
- #pragma warning(pop)
-  this->host = host;
-  this->port = port;
-  ::sockaddr_in const sockaddr_in {
-   .sin_family = AF_INET,
-   .sin_port = static_cast<u16>(((port & 0xff) << 8) | (port >> 8)),
-   .sin_addr = {
-    .S_un = {
-     .S_addr = host
-    }
-   }
-  };
-
-  [[maybe_unused]] auto const result = ::bind(socket_handle, reinterpret_cast<::sockaddr const*>(&sockaddr_in), sizeof(sockaddr_in));
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
+ stl::status_type<net::socket_error_code> socket::send(stl::buffer const& data) const noexcept {
+  std::size_t total_sent = 0;
+  while (total_sent != std::size(data)) {
+   auto const sent_size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data) + total_sent), static_cast<i32>(std::size(data) - total_sent), 0);
+   if (sent_size == SOCKET_ERROR) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
     #pragma warning(push)
     #pragma warning(disable : 4061 4065)
     switch (socket_error_code) {
     default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::bind - {}", lookup_enum_verbose(socket_error_code));
+     SPDLOG_ERROR("unhandled socket_error_code for ::send - {}", lookup_enum_verbose(socket_error_code));
      return socket_error_code;
     }
     #pragma warning(pop)
    }
-   return socket_error_code::success;
-  #endif
+   total_sent += static_cast<std::size_t>(sent_size);
+  }
+  return net::socket_error_code::success;
  }
- sock_err_u32_ret_t socket::send(stl::buffer const& data) const noexcept {
-  auto const result = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
+ stl::status_type<net::socket_error_code> socket::send(std::string_view const data) const noexcept {
+  std::size_t total_sent = 0;
+  while (total_sent != std::size(data)) {
+   auto const sent_size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data) + total_sent), static_cast<i32>(std::size(data) + 1 - total_sent), 0);
+   if (sent_size == SOCKET_ERROR) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
     #pragma warning(push)
     #pragma warning(disable : 4061 4065)
     switch (socket_error_code) {
     default:
      SPDLOG_ERROR("unhandled socket_error_code for ::send - {}", lookup_enum_verbose(socket_error_code));
-     return { socket_error_code, {} };
+     return socket_error_code;
     }
     #pragma warning(pop)
    }
-   return { socket_error_code::success, static_cast<u32>(result) };
-  #else
-   return static_cast<u32>(result);
-  #endif
- }
- sock_err_u32_ret_t socket::send(std::string_view const data) const noexcept {
-  auto const result = ::send(socket_handle, std::data(data), static_cast<i32>(std::size(data)) + 1, 0);
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::send - {}", lookup_enum_verbose(socket_error_code));
-     return { socket_error_code, {} };
-    }
-    #pragma warning(pop)
-   }
-   return { socket_error_code::success, static_cast<u32>(result) };
-  #else
-   return static_cast<u32>(result);
-  #endif
+   total_sent += static_cast<std::size_t>(sent_size);
+  }
+  return net::socket_error_code::success;
  }
  sock_err_ret_t socket::close() noexcept {
   [[maybe_unused]] auto const result = ::closesocket(this->socket_handle);
@@ -228,7 +195,7 @@ namespace net {
  sock_err_ret_t socket::connect() const noexcept {
   ::sockaddr_in const sockaddr_in {
    .sin_family = AF_INET,
-   .sin_port = this->port,
+   .sin_port = static_cast<u16>(((this->port & 0xff) << 8) | (this->port >> 8)),
    .sin_addr = {
     .S_un = {
      .S_addr = this->host
@@ -251,40 +218,14 @@ namespace net {
    return socket_error_code::success;
   #endif
  }
- #pragma warning(push)
- #pragma warning(disable : 4458)
- sock_err_ret_t socket::connect(u32 const host, u16 const port) noexcept {
- #pragma warning(pop)
-  this->host = host;
-  this->port = port;
-  ::sockaddr_in const sockaddr_in {
-   .sin_family = AF_INET,
-   .sin_port = port,
-   .sin_addr = {
-    .S_un = {
-     .S_addr = host
-    }
-   }
-  };
-  [[maybe_unused]] auto const result = ::connect(this->socket_handle, reinterpret_cast<::sockaddr const*>(&sockaddr_in), sizeof(sockaddr_in));
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::connect - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
- }
  
- sock_err_u32_ret_t socket::receive(stl::buffer data) const noexcept {
-  [[maybe_unused]] auto const result = ::recv(this->socket_handle, reinterpret_cast<char*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
+ stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> socket::receive() const noexcept {
+  std::array<u08, 4096> buffer;
+  std::size_t total_size = 0;
+  while ()
+  auto const receive_size = ::recv(this->socket_handle, reinterpret_cast<char*>(std::data(data)), static_cast<i32>(std::size(data)), 0)
+
+  [[maybe_unused]] auto const result = ;
   #ifdef NET_HANDLE_ERR
    if (result == SOCKET_ERROR) [[unlikely]] {
     auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
