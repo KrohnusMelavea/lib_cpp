@@ -1,12 +1,14 @@
 #pragma once
 
 #include "types.hpp"
+#include "buffer.hpp"
 #include <span>
 #include <cstdlib>
 #include <utility>
 #include <spdlog/spdlog.h>
 
 namespace stl {
+ /* Requires T = POD */
  template <class T> class dynamic_array {
  public:
   dynamic_array() noexcept = default;
@@ -44,6 +46,29 @@ namespace stl {
 
   operator std::span<T>() const noexcept { return std::span<T>{ m_data, m_size }; } 
   operator std::span<T>() noexcept { return std::span<T>{ m_data, m_size }; }
+
+  void grow(std::size_t const size) noexcept {
+   auto const new_data = new T[m_size + size];
+   (void)std::memcpy(new_data, m_data, m_size);
+   delete[] m_data;
+   m_data = new_data;
+   m_size += size;
+  }
+  void grow(stl::buffer const data) noexcept {
+   auto const new_data = new T[m_size + std::size(data)];
+   (void)std::memcpy(new_data, m_data, m_size);
+   (void)std::memcpy(new_data, reinterpret_cast<u08*>(std::data(data) + m_size), std::size(data));
+   delete[] m_data;
+   m_data = new_data;
+   m_size += std::size(data);
+  }
+  void shrink(std::size_t const size) noexcept {
+   auto const new_data = new T[m_size - size];
+   (void)std::memcpy(new_data, m_data, m_size - size);
+   delete[] m_data;
+   m_data = new_data;
+   m_size -= size;
+  }
 
   void free() noexcept {
    delete[] m_data;
