@@ -12,5 +12,5 @@
 
 import urllib3
 
-response = urllib3.request("GET", "http://localhost:81/unique_uri?var0=fdsa&var1=asdf")
+response = urllib3.request("GET", "http://localhost:5120/Product")
 print(response.data)

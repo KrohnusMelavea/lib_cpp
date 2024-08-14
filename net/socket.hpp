@@ -44,14 +44,16 @@ namespace net {
   ~socket() noexcept;
 
   sock_err_ret_t bind() const noexcept;
-  stl::status_type<net::socket_error_code> send(stl::buffer const& data) const noexcept;
-  stl::status_type<net::socket_error_code> send(std::string_view const data) const noexcept;
+  stl::status_type<net::socket_error_code, u32> send(stl::buffer const data) const noexcept;
+  stl::status_type<net::socket_error_code, u32> send(std::string_view const data) const noexcept;
   sock_err_ret_t close() noexcept;
   [[nodiscard]] sock_err_sock_ret_t accept() const noexcept;
   sock_err_ret_t listen() const noexcept;
   sock_err_ret_t connect() const noexcept;
-  stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> receive() const noexcept;
+  stl::status_type<net::socket_error_code, u32> receive(stl::buffer const data) const noexcept;
   sock_err_ret_t shutdown() noexcept;
+
+  bool is_active() const noexcept;
 
   static sock_err_ret_t init_backend() noexcept;
   static sock_err_ret_t deinit_backend() noexcept;

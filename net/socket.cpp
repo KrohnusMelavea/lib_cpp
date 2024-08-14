@@ -82,220 +82,96 @@ namespace net {
     }
    }
   };
-  [[maybe_unused]] auto const result = ::bind(socket_handle, reinterpret_cast<::sockaddr const*>(&sockaddr_in), sizeof(sockaddr_in));
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::bind - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
- }
- stl::status_type<net::socket_error_code> socket::send(stl::buffer const& data) const noexcept {
-  std::size_t total_sent = 0;
-  while (total_sent != std::size(data)) {
-   auto const sent_size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data) + total_sent), static_cast<i32>(std::size(data) - total_sent), 0);
-   if (sent_size == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::send - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   total_sent += static_cast<std::size_t>(sent_size);
+  if (::bind(socket_handle, reinterpret_cast<::sockaddr const*>(&sockaddr_in), sizeof(sockaddr_in)) == SOCKET_ERROR) [[unlikely]] {
+   return static_cast<net::socket_error_code>(::WSAGetLastError());
+  } else [[likely]] {
+   return net::socket_error_code::success;
   }
-  return net::socket_error_code::success;
  }
- stl::status_type<net::socket_error_code> socket::send(std::string_view const data) const noexcept {
-  std::size_t total_sent = 0;
-  while (total_sent != std::size(data)) {
-   auto const sent_size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data) + total_sent), static_cast<i32>(std::size(data) + 1 - total_sent), 0);
-   if (sent_size == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::send - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   total_sent += static_cast<std::size_t>(sent_size);
+ stl::status_type<net::socket_error_code, u32> socket::send(stl::buffer const data) const noexcept {
+  auto const size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
+  if (size == SOCKET_ERROR) [[unlikely]] {
+   return {static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32};
+  } else [[likely]] {
+   return {net::socket_error_code::success, static_cast<u32>(size)};
   }
-  return net::socket_error_code::success;
+ }
+ stl::status_type<net::socket_error_code, u32> socket::send(std::string_view const data) const noexcept {
+  auto const size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data)), static_cast<i32>(std::size(data) + 1), 0);
+  if (size == SOCKET_ERROR) [[unlikely]] {
+   return {static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32};
+  } else [[likely]] {
+   return {net::socket_error_code::success, static_cast<u32>(size)};
+  }
  }
  sock_err_ret_t socket::close() noexcept {
-  [[maybe_unused]] auto const result = ::closesocket(this->socket_handle);
-  this->socket_handle = NULL;
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::closesocket - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
+  if (::closesocket(this->socket_handle) == SOCKET_ERROR) [[unlikely]] {
+   return static_cast<net::socket_error_code>(::WSAGetLastError());
+  } else {
+   return net::socket_error_code::success;
+  }
  }
  [[nodiscard]] sock_err_sock_ret_t socket::accept() const noexcept {
   ::sockaddr_in sockaddr_in;
   auto length = static_cast<i32>(sizeof(sockaddr_in));
   auto const client_socket_handle = ::accept(this->socket_handle, reinterpret_cast<::sockaddr*>(&sockaddr_in), &length);
-  #ifdef NET_HANDLE_ERR
-   if (socket_handle == INVALID_SOCKET) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::accept - {}", lookup_enum_verbose(socket_error_code));
-     return { socket_error_code, {} };
-    }
-    #pragma warning(pop)
-   }
-   return { socket_error_code::success, socket{ client_socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port, this->protocol } }; /* Possible Unintentional Copy/Move Constructor Invokation */
-  #else
-   return socket{ socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port }; /* Possible Unintentional Copy/Move Constructor Invokation */
-  #endif
+  if (client_socket_handle == INVALID_SOCKET) [[unlikely]] {
+   return {static_cast<net::socket_error_code>(::WSAGetLastError()), {}};
+  } else [[likely]] {
+   return {net::socket_error_code::success, net::socket{client_socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port, this->protocol}};
+  }
  }
  sock_err_ret_t socket::listen() const noexcept {
-  [[maybe_unused]] auto const result = ::listen(this->socket_handle, SOMAXCONN);
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::listen - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
+  if (::listen(this->socket_handle, SOMAXCONN) == SOCKET_ERROR) [[unlikely]] {
+   return static_cast<net::socket_error_code>(::WSAGetLastError());
+  } else [[likely]] {
+   return net::socket_error_code::success;
+  }
  }
  sock_err_ret_t socket::connect() const noexcept {
-  ::sockaddr_in const sockaddr_in {
+  ::sockaddr_in const address {
    .sin_family = AF_INET,
    .sin_port = static_cast<u16>(((this->port & 0xff) << 8) | (this->port >> 8)),
-   .sin_addr = {
-    .S_un = {
-     .S_addr = this->host
-    }
-   }
+   .sin_addr = { .S_un = { .S_addr = this->host } }
   };
-  [[maybe_unused]] auto const result = ::connect(this->socket_handle, reinterpret_cast<::sockaddr const*>(&sockaddr_in), sizeof(sockaddr_in));
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::connect - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
+  if (::connect(this->socket_handle, reinterpret_cast<::sockaddr const*>(&address), sizeof(sockaddr_in)) == SOCKET_ERROR) [[unlikely]] {
+   return static_cast<net::socket_error_code>(::WSAGetLastError());
+  } else [[likely]] {
+   return net::socket_error_code::success;
+  }
  }
  
- stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> socket::receive() const noexcept {
-  std::array<u08, 4096> buffer;
-  std::size_t total_size = 0;
-  while ()
-  auto const receive_size = ::recv(this->socket_handle, reinterpret_cast<char*>(std::data(data)), static_cast<i32>(std::size(data)), 0)
-
-  [[maybe_unused]] auto const result = ;
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::recv - {}", lookup_enum_verbose(socket_error_code));
-     return { socket_error_code, {} };
-    }
-    #pragma warning(pop)
-   }
-   return { socket_error_code::success, static_cast<u32>(result) };
-  #else
-   return static_cast<u32>(result);
-  #endif
+ stl::status_type<net::socket_error_code, u32> socket::receive(stl::buffer const data) const noexcept {
+  auto const size = ::recv(this->socket_handle, reinterpret_cast<char*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
+  if (size == SOCKET_ERROR) [[unlikely]] {
+   return {static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32};
+  } else [[likely]] {
+   return {net::socket_error_code::success, static_cast<u32>(size)};
+  }
  }
  sock_err_ret_t socket::shutdown() noexcept {
-  [[maybe_unused]] auto const result = ::shutdown(this->socket_handle, SD_SEND);
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::shutdown - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-  #endif
-  this->socket_handle = NULL;
-  #ifdef NET_HANDLE_ERR
-   return socket_error_code::success;
-  #endif
+  this->socket_handle = INVALID_SOCKET;
+  if (::shutdown(this->socket_handle, SD_SEND) == SOCKET_ERROR) [[unlikely]] {
+   return static_cast<net::socket_error_code>(::WSAGetLastError());
+  } else [[likely]] {
+   return net::socket_error_code::success;
+  }
+ }
+
+ bool socket::is_active() const noexcept {
+  return this->socket_handle != INVALID_SOCKET;
  }
 
  sock_err_ret_t socket::init_backend() noexcept {
-  [[maybe_unused]] auto const socket_error_code = static_cast<net::socket_error_code>(::WSAStartup(MAKEWORD(2, 2), &wsa_data));
-  #ifdef NET_HANDLE_ERR
-   if (socket_error_code != net::socket_error_code::success) [[unlikely]] {
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::WSAStartup - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
+  return static_cast<net::socket_error_code>(::WSAStartup(MAKEWORD(2, 2), &wsa_data));
  }
  sock_err_ret_t socket::deinit_backend() noexcept {
   [[maybe_unused]] auto const result = ::WSACleanup();
-  #ifdef NET_HANDLE_ERR
-   if (result == SOCKET_ERROR) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    #pragma warning(push)
-    #pragma warning(disable : 4061 4065)
-    switch (socket_error_code) {
-    default:
-     SPDLOG_ERROR("unhandled socket_error_code for ::WSACleanup - {}", lookup_enum_verbose(socket_error_code));
-     return socket_error_code;
-    }
-    #pragma warning(pop)
-   }
-   return socket_error_code::success;
-  #endif
+  if (::WSACleanup() == SOCKET_ERROR) [[unlikely]] {
+   return static_cast<net::socket_error_code>(::WSAGetLastError());
+  } else [[likely]] {
+   return net::socket_error_code::success;
+  }
  }
 
  WSAData socket::wsa_data{};
