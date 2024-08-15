@@ -22,14 +22,14 @@ namespace std {
 #endif
 }
 
-inline constexpr i08 operator""_i08(u64 const n) noexcept { return static_cast<i08>(n); }
-inline constexpr i16 operator""_i16(u64 const n) noexcept { return static_cast<i16>(n); }
-inline constexpr i32 operator""_i32(u64 const n) noexcept { return static_cast<i32>(n); }
-inline constexpr i64 operator""_i64(u64 const n) noexcept { return static_cast<i64>(n); }
-inline constexpr u08 operator""_u08(u64 const n) noexcept { return static_cast<u08>(n); }
-inline constexpr u16 operator""_u16(u64 const n) noexcept { return static_cast<u16>(n); }
-inline constexpr u32 operator""_u32(u64 const n) noexcept { return static_cast<u32>(n); }
-inline constexpr u64 operator""_u64(u64 const n) noexcept { return static_cast<u64>(n); }
-inline constexpr f32 operator""_f32(f96 const n) noexcept { return static_cast<f32>(n); }
-inline constexpr f64 operator""_f64(f96 const n) noexcept { return static_cast<f64>(n); }
-inline constexpr f96 operator""_f96(f96 const n) noexcept { return static_cast<f96>(n); }
+inline consteval i08 operator""_i08(u64 const n) noexcept { return static_cast<i08>(n); }
+inline consteval i16 operator""_i16(u64 const n) noexcept { return static_cast<i16>(n); }
+inline consteval i32 operator""_i32(u64 const n) noexcept { return static_cast<i32>(n); }
+inline consteval i64 operator""_i64(u64 const n) noexcept { return static_cast<i64>(n); }
+inline consteval u08 operator""_u08(u64 const n) noexcept { return static_cast<u08>(n); }
+inline consteval u16 operator""_u16(u64 const n) noexcept { return static_cast<u16>(n); }
+inline consteval u32 operator""_u32(u64 const n) noexcept { return static_cast<u32>(n); }
+inline consteval u64 operator""_u64(u64 const n) noexcept { return static_cast<u64>(n); }
+inline consteval f32 operator""_f32(f96 const n) noexcept { return static_cast<f32>(n); }
+inline consteval f64 operator""_f64(f96 const n) noexcept { return static_cast<f64>(n); }
+inline consteval f96 operator""_f96(f96 const n) noexcept { return static_cast<f96>(n); }
