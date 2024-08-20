@@ -43,7 +43,7 @@ namespace net {
    auto const receive_size_st = m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer) - 1});
    if (receive_size_st.status != net::socket_error_code::success) [[unlikely]] {
     return { receive_size_st.status, {} };
-   }
+   } else if (receive_size_st.value != )
   }
  }
  
