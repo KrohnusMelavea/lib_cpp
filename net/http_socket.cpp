@@ -82,7 +82,6 @@ namespace net {
   (void)std::memcpy(std::data(response) + std::size(http_response_header_prefix) + content_length_size + std::size(http_response_header_suffix), std::data(data), std::size(data));
   response[std::size(response) - 1] = 0;
   auto const result = this->send(stl::buffer{std::data(response), std::size(response)});
-  std::cout << std::data(response) << '\n';
   return result.status;
   /* Note: If going async, response is destructed at this point, so be weary */
  }
