@@ -62,7 +62,24 @@ namespace net {
   return m_socket.shutdown();
  }
 
- stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> http_socket::receive_get_request() const {
+ stl::status_type<net::socket_error_code, std::string> http_socket::receive_get_request() const {
+  auto [get_request_status, raw_get_request] = this->receive_get_request_raw();
+  if (get_request_status != net::socket_error_code::success) [[unlikely]] {
+   return { get_request_status, std::string("") };
+  } else {
+   if (std::size(raw_get_request) < 7) [[unlikely]] {
+    return { net::socket_error_code::malformed_request, std::string("") };
+   }
+   auto begin_it = std::begin(raw_get_request)+4;
+   auto space_sentinel_it = std::find(begin_it, std::end(raw_get_request), ' ');
+   if (space_sentinel_it == std::end(raw_get_request)) [[unlikely]] {
+    return { net::socket_error_code::malformed_request, std::string("") };
+   }
+   return { net::socket_error_code::success, std::string(begin_it, space_sentinel_it) };
+  }
+ }
+
+ stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> http_socket::receive_get_request_raw() const {
   std::array<u08, 8192> buffer;
   auto const receive_size_st = m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
   if (receive_size_st.status != net::socket_error_code::success) [[unlikely]] {
@@ -90,11 +107,11 @@ namespace net {
   http_socket server{host, port};
   if (const auto status = server.bind().status; status != net::socket_error_code::success) [[unlikely]] {
    return { status, server };
-  } else if (const auto status = server.listen().status; status != net::socket_error_code::success) [[unlikely]] {
-   return { status, server };
-  } else [[likely]] {
-   return { net::socket_error_code::success, server };
   }
+  if (const auto status = server.listen().status; status != net::socket_error_code::success) [[unlikely]] {
+   return { status, server };
+  }
+  return { net::socket_error_code::success, server };
  }
  stl::status_type<net::socket_error_code, net::http_socket> http_socket::create_client(u32 const host, u16 const port) {
   http_socket client{host, port};

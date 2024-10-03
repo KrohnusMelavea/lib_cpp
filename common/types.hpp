@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 
 typedef std::int8_t   i08;
 typedef std::int16_t  i16;
@@ -16,9 +17,9 @@ typedef long double   f96;
 
 namespace std {
 #ifdef _WIN64
-    typedef u64 size_t;
+ typedef u64 size_t;
 #else
-    typedef u32 size_t;
+ typedef u32 size_t;
 #endif
 }
 
@@ -33,3 +34,63 @@ inline consteval u64 operator""_u64(u64 const n) noexcept { return static_cast<u
 inline consteval f32 operator""_f32(f96 const n) noexcept { return static_cast<f32>(n); }
 inline consteval f64 operator""_f64(f96 const n) noexcept { return static_cast<f64>(n); }
 inline consteval f96 operator""_f96(f96 const n) noexcept { return static_cast<f96>(n); }
+
+/* Atomic Concepts */
+template <class T> concept IsAddableWithSelf = requires(T a, T b) {
+ a + b;
+};
+template <class T> concept IsSubtractableWithSelf = requires(T a, T b) {
+ a - b;
+};
+template <class T> concept IsMultipliableWithSelf = requires(T a, T b) {
+ a * b;
+};
+template <class T> concept IsDividableWithSelf = requires(T a, T b) {
+ a / b;
+};
+template <class T> concept IsModableWithSelf = requires(T a, T b) {
+ a % b;
+};
+template <class T> concept IsLeftShiftableWithSelf = requires(T a, T b) {
+ a << b;
+};
+template <class T> concept IsRightShiftableWithSelf = requires(T a, T b) {
+ a >> b;
+};
+template <class T> concept IsORableWithSelf = requires(T a, T b) {
+ a | b;
+};
+template <class T> concept IsANDableWithSelf = requires(T a, T b) {
+ a & b;
+};
+template <class T> concept IsXORableWithSelf = requires(T a, T b) {
+ a ^ b;
+};
+
+template <class T> concept IsAddAssignableWithSelf = requires(T a, T b) {
+ a += b;
+};
+template <class T> concept IsSubtractAssignableWithSelf = requires(T a, T b) {
+ a -= b;
+};
+template <class T> concept IsMultiplyAssignableWithSelf = requires(T a, T b) {
+ a *= b;
+};
+template <class T> concept IsDivideAssignableWithSelf = requires(T a, T b) {
+ a /= b;
+};
+template <class T> concept IsModAssignableWithSelf = requires(T a, T b) {
+ a %= b;
+};
+template <class T> concept IsLeftShiftAssignableWithSelf = requires(T a, T b) {
+ a <<= b;
+};
+template <class T> concept IsRightShiftAssignableWithSelf = requires(T a, T b) {
+ a >>= b;
+};
+template <class T> concept IsORAssignableWithSelf = requires(T a, T b) {
+ a |= b;
+};
+template <class T> concept IsANDAssignableWithSelf = requires(T a, T b) {
+ a &= b;
+};

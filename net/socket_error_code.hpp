@@ -104,9 +104,11 @@ namespace net {
   wsa_qos_esdmodeobj         = 11029, /* Invalid QoS shape discard mode object. An invalid shape discard mode object was found in the QoS provider-specific buffer. */
   wsa_qos_eshaperateobj      = 11030, /* Invalid QoS shaping rate object. An invalid shaping rate object was found in the QoS provider-specific buffer. */
   wsa_qos_reserved_petype    = 11031, /* Reserved policy QoS element type. A reserved policy element was found in the QoS provider-specific buffer. */
+
+  malformed_request = 16383, /* Custom status */
  };
 
- inline constexpr std::array<std::pair<socket_error_code, std::string_view>, 96> SOCKET_ERROR_CODE_LOOKUP {
+ inline constexpr std::array<std::pair<socket_error_code, std::string_view>, 97> SOCKET_ERROR_CODE_LOOKUP {
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::success,                    "socket_error_code::success" },
   std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_invalid_handle,         "socket_error_code::wsa_invalid_handle" },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_not_enough_memory,      "socket_error_code::wsa_not_enough_memory" },
@@ -202,10 +204,11 @@ namespace net {
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_epsfilterspec,      "socket_error_code::wsa_qos_epsfilterspec" },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_esdmodeobj,         "socket_error_code::wsa_qos_esdmodeobj" },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_eshaperateobj,      "socket_error_code::wsa_qos_eshaperateobj" },
-		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_reserved_petype,    "socket_error_code::wsa_qos_reserved_petype" }
+		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_reserved_petype,    "socket_error_code::wsa_qos_reserved_petype" },
+  std::pair<socket_error_code, std::string_view>{ socket_error_code::malformed_request,          "socekt_error_code::malformed_request" },
  };
 
- inline constexpr std::array<std::pair<socket_error_code, std::string_view>, 96> SOCKET_ERROR_CODE_DESCRIPTION_LOOKUP{
+ inline constexpr std::array<std::pair<socket_error_code, std::string_view>, 97> SOCKET_ERROR_CODE_DESCRIPTION_LOOKUP{
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::success,                    "" },
   std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_invalid_handle,         "Specified event object handle is invalid. An application attempts to use an event object but the specified handle is not valid." },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_not_enough_memory,      "Insufficient memory available. An application used a Windows Sockets function that directly maps to a Windows function. The Windows function is indicating a lack of required memory resources." },
@@ -301,7 +304,8 @@ namespace net {
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_epsfilterspec,      "Invalid QoS provider-specific filterspec. An invalid FILTERSPEC was found in the QoS provider-specific buffer." },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_esdmodeobj,         "Invalid QoS shape discard mode object. An invalid shape discard mode object was found in the QoS provider-specific buffer." },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_eshaperateobj,      "Invalid QoS shaping rate object. An invalid shaping rate object was found in the QoS provider-specific buffer." },
-		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_reserved_petype,    "Reserved policy QoS element type. A reserved policy element was found in the QoS provider-specific buffer." }
+		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_reserved_petype,    "Reserved policy QoS element type. A reserved policy element was found in the QoS provider-specific buffer." },
+  std::pair<socket_error_code, std::string_view>{ socket_error_code::malformed_request,          "Request was malformed, possibly malicious." },
  };
 
  [[nodiscard]] inline constexpr std::string_view lookup_enum(socket_error_code const socket_error_code) noexcept {
