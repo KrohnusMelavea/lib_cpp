@@ -94,3 +94,16 @@ template <class T> concept IsORAssignableWithSelf = requires(T a, T b) {
 template <class T> concept IsANDAssignableWithSelf = requires(T a, T b) {
  a &= b;
 };
+
+template <class T> concept HasDataMethod = requires(T a) {
+ a.data();
+};
+template <class T> concept HasSizeMethod = requires(T a) {
+ a.size();
+};
+
+//Compound Concepts
+template <class T> concept IsSpanLike = requires(T a) {
+ HasDataMethod<T>;
+ HasSizeMethod<T>;
+};
