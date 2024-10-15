@@ -1,5 +1,14 @@
 #pragma once
 
+#include "types.hpp"
+#include "stl/buffer.hpp"
+#include "stl/cvt/to_hex_string.hpp"
+#include "net/tls_extension.hpp"
+#include "net/tls_supported_group.hpp"
+#include "net/tls_signature_algorithm.hpp"
+#include <span>
+#include <iostream>
+
 void process_client_handshake(stl::buffer const data) noexcept {
  u08* p = reinterpret_cast<u08*>(std::data(data));
  switch (*p++) {
