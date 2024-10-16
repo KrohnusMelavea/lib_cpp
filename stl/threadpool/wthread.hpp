@@ -6,12 +6,11 @@
 namespace stl::threadpool {
  template <class callback_t, class callable_t, class... Args> class wthread {
  public:
-  wthread() noexcept : m_callback{}, m_callable{}, m_args{}, m_running{true}, m_working{false} {
-   m_thread = std::thread(&wthread::run, std::ref(*this));
+  wthread() noexcept : m_thread{std::thread(&wthread::run, std::ref(*this))}, m_callback{}, m_callable{}, m_args{}, m_running{true}, m_working{false} {
+
   }
 
   void run() {
-   //std::cout << std::format("Thread ({})\n", reinterpret_cast<std::size_t>(this));
    while (this->m_running) {
     if (this->m_working) {
      this->m_callback(std::apply(this->m_callable, this->m_args));
