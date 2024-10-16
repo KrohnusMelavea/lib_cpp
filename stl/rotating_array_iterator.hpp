@@ -3,16 +3,17 @@
 #include "types.hpp"
 
 namespace stl {
- template <class T> struct rotating_array_iterator {
-  constexpr rotating_array_iterator(T *const data, std::size_t const front_index, std::size_t const capacity) : m_data{data}, m_index{}, m_front_index{front_index}, m_capacity{capacity} {}
+ template <class T> class  rotating_array_iterator {
+ public:
+  inline constexpr rotating_array_iterator(T *const data, std::size_t const front, std::size_t const size) noexcept : m_data{data}, m_front{front}, m_size{size} { }
 
-  inline constexpr auto operator== (auto const&) noexcept { return m_index == m_capacity; }
-  inline constexpr auto& operator* () noexcept { return *(m_data + (m_front_index + m_index) % m_capacity); }
-  inline constexpr void operator++ () noexcept { ++m_index; } 
+  inline constexpr bool operator==(auto&&...) const noexcept { return this->m_index == this->m_size; }
+  inline constexpr T& operator*() noexcept { return *(this->m_data + (this->m_front + this->m_index) % this->m_size); }
+  inline constexpr void operator++() noexcept { ++this->m_index; }
 
-  T* const m_data;
-  std::size_t m_index;
-  std::size_t const m_front_index;
-  std::size_t const m_capacity;
+ private:
+  T *const m_data;
+  std::size_t m_index = 0;
+  std::size_t const m_front, m_size;
  };
 }
