@@ -35,6 +35,14 @@ inline consteval f32 operator""_f32(f96 const n) noexcept { return static_cast<f
 inline consteval f64 operator""_f64(f96 const n) noexcept { return static_cast<f64>(n); }
 inline consteval f96 operator""_f96(f96 const n) noexcept { return static_cast<f96>(n); }
 
+template <class T = void, class... Ts> struct max_type_size {
+ static constexpr std::size_t value = sizeof(T) < max_type_size<Ts...>::value ? max_type_size<Ts...>::value : sizeof(T);
+};
+template <> struct max_type_size<> {
+ static constexpr std::size_t value = 0;
+};
+template <class... Ts> static constexpr auto max_type_size_v = max_type_size<Ts...>::value;
+
 /* Atomic Concepts */
 template <class T> concept IsAddableWithSelf = requires(T a, T b) {
  a + b;

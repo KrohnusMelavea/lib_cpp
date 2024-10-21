@@ -18,6 +18,10 @@ namespace stl::threadpool {
   using job_t = std::tuple<callback_t, callable_t, Args...>;
 
   ~dynamic_decaying_centralised_threadpool() noexcept {
+   this->stop();
+  }
+
+  void stop() noexcept {
    (void)std::for_each(std::begin(this->m_wthreads), std::end(this->m_wthreads), std::mem_fn(&wthread_t::stop));
    (void)std::for_each(std::begin(this->m_wthreads), std::end(this->m_wthreads), std::mem_fn(&wthread_t::join));
   }

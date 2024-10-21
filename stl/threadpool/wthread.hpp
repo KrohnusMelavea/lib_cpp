@@ -1,20 +1,31 @@
 #pragma once
 
+#include <chrono>
 #include <thread>
 #include <iostream>
 
 namespace stl::threadpool {
  template <class callback_t, class callable_t, class... Args> class wthread {
  public:
-  wthread() noexcept : m_thread{std::thread(&wthread::run, std::ref(*this))}, m_callback{}, m_callable{}, m_args{}, m_running{true}, m_working{false} {
+  // wthread() noexcept : m_thread{std::thread(&wthread::run, std::ref(*this))}, m_callback{}, m_callable{}, m_args{}, m_last_worked{std::chrono::steady_clock::now()}, m_running{true}, m_working{false} {
+
+  // }
+
+  wthread() noexcept : m_thread{}, m_callback{}, m_callable{}, m_args{}, m_last_worked{std::chrono::steady_clock::now()}, m_running{false}, m_working{false} {
 
   }
 
   void run() {
+   using namespace std::chrono_literals;
+
    while (this->m_running) {
     if (this->m_working) {
      this->m_callback(std::apply(this->m_callable, this->m_args));
      this->m_working = false;
+     this->m_last_worked = std::chrono::steady_clock::now();
+    }
+    if (std::chrono::steady_clock::now() - this->m_last_worked >= 10s) {
+     this->m_running = false;
     }
    }
   }
@@ -47,6 +58,7 @@ namespace stl::threadpool {
   callback_t m_callback;
   callable_t m_callable;
   std::tuple<Args...> m_args;
+  std::chrono::time_point<std::chrono::steady_clock> m_last_worked;
   bool m_running; /* Signals that the thread is actively taking on work */
   bool m_working; /* Signals that the thread is busy with existing work */
  };

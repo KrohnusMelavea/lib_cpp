@@ -10,8 +10,8 @@ namespace stl {
    static constexpr std::array<char, 16> HEX_LOOKUP{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
    std::string hex(std::size(data) << 1, '\0');
    auto s = std::data(hex);
-   auto v = reinterpret_cast<u08*>(std::data(data));
-   auto v_end = v + std::size(data);
+   auto v = reinterpret_cast<u08 const*>(std::data(data));
+   auto const v_end = v + std::size(data);
    if (std::size(data) == 0) [[unlikely]] {
     return hex;
    }

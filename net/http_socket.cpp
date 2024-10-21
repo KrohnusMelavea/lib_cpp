@@ -16,22 +16,27 @@ namespace net {
  }
 
  stl::status_type<net::socket_error_code> http_socket::bind() const {
-  return m_socket.bind();
+  return this->m_socket.bind();
  }
  stl::status_type<net::socket_error_code> http_socket::listen() const {
-  return m_socket.listen();
+  return this->m_socket.listen();
  }
  stl::status_type<net::socket_error_code> http_socket::connect() const {
-  return m_socket.connect();
+  return this->m_socket.connect();
+ }
+ stl::status_type<net::socket_error_code> http_socket::connect(u32 const host, u16 const port) {
+  this->m_socket.host = host;
+  this->m_socket.port = port;
+  return this->m_socket.connect();
  }
  stl::status_type<net::socket_error_code, net::http_socket> http_socket::accept() const {
-  auto client_st = m_socket.accept();
+  auto client_st = this->m_socket.accept();
   return { client_st.status, net::http_socket{client_st.value} };
  }
  stl::status_type<net::socket_error_code> http_socket::send(stl::buffer const data) const {
   std::size_t total_sent = 0;
   do {
-   auto const sent_size_st = m_socket.send(stl::buffer{
+   auto const sent_size_st = this->m_socket.send(stl::buffer{
     reinterpret_cast<void*>(reinterpret_cast<std::size_t>(std::data(data)) + total_sent), 
     std::size(data) - total_sent
    });
@@ -47,7 +52,7 @@ namespace net {
   std::array<u08, 8192> buffer;
   stl::dynamic_array<u08> data;
   while (true) {
-   auto const receive_size_st = m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
+   auto const receive_size_st =  this->m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
    if (receive_size_st.status != net::socket_error_code::success || receive_size_st.value == 0_u32) [[unlikely]] {
     return { receive_size_st.status, std::move(data) };
    } else [[likely]] {
@@ -56,10 +61,27 @@ namespace net {
   }
  }
  stl::status_type<net::socket_error_code> http_socket::close() {
-  return m_socket.close();
+  return  this->m_socket.close();
  }
  stl::status_type<net::socket_error_code> http_socket::shutdown() {
-  return m_socket.shutdown();
+  return  this->m_socket.shutdown();
+ }
+
+ net::socket const& http_socket::socket() const noexcept {
+  return this->m_socket;
+ }
+
+ stl::status_type<net::socket_error_code, net::http_request> http_socket::receive_request() const {
+  net::http_request http_request;
+  std::array<u08, 8192> buffer;
+  auto const receive_size_st = this->m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
+  if (receive_size_st.status != net::socket_error_code::success) [[unlikely]] {
+   return stl::status_type<net::socket_error_code, net::http_request>{ receive_size_st.status, {} };
+  }
+  auto c_ptr = http_request.read_header(std::string_view{reinterpret_cast<char*>(std::data(buffer)), receive_size_st.value});
+  auto const& header = http_request.header();
+
+  return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::success, std::move(http_request) };
  }
 
  stl::status_type<net::socket_error_code, std::string> http_socket::receive_get_request() const {
@@ -81,7 +103,7 @@ namespace net {
 
  stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> http_socket::receive_get_request_raw() const {
   std::array<u08, 8192> buffer;
-  auto const receive_size_st = m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
+  auto const receive_size_st = this->m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
   if (receive_size_st.status != net::socket_error_code::success) [[unlikely]] {
    return { receive_size_st.status, {} };
   } else [[likely]] {

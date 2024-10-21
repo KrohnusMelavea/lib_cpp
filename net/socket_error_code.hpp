@@ -4,8 +4,10 @@
 #include <array>
 #include <tuple>
 #include <format>
+#include <string>
 #include <algorithm>
 #include <string_view>
+
 namespace net { 
  enum class socket_error_code : u16 {
 		success                    =     0,
@@ -327,7 +329,7 @@ namespace net {
  [[nodiscard]] inline constexpr std::string lookup_enum_verbose(socket_error_code const socket_error_code) noexcept {
   auto const it = std::find_if(std::cbegin(SOCKET_ERROR_CODE_LOOKUP), std::cend(SOCKET_ERROR_CODE_LOOKUP), [&socket_error_code] (auto const entry) { return entry.first == socket_error_code; });
   if (it == std::cend(SOCKET_ERROR_CODE_LOOKUP)) [[unlikely]] {
-   return "Invalid Enum";
+   return std::string("Invalid Enum");
   } else [[likely]] {
    return std::format("{}: {}", it->second, SOCKET_ERROR_CODE_DESCRIPTION_LOOKUP[it - std::cbegin(SOCKET_ERROR_CODE_LOOKUP)].second);
   }

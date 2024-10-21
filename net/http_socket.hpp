@@ -1,9 +1,11 @@
 #pragma once
 
+#include "types.hpp"
 #include "socket.hpp"
 #include "socket_error_code.hpp"
 #include "stl/status_type.hpp"
 #include "stl/dynamic_array.hpp"
+#include "net/http_request.hpp"
 
 namespace net {
  class http_socket {
@@ -16,11 +18,16 @@ namespace net {
   stl::status_type<net::socket_error_code> bind() const;
   stl::status_type<net::socket_error_code> listen() const;
   stl::status_type<net::socket_error_code> connect() const;
+  stl::status_type<net::socket_error_code> connect(u32 const host, u16 const port);
   stl::status_type<net::socket_error_code, http_socket> accept() const;
   stl::status_type<net::socket_error_code> send(stl::buffer const data) const;
   stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> receive() const;
   stl::status_type<net::socket_error_code> close();
   stl::status_type<net::socket_error_code> shutdown();
+
+  net::socket const& socket() const noexcept;
+
+  stl::status_type<net::socket_error_code, net::http_request> receive_request() const;
 
   stl::status_type<net::socket_error_code, std::string> receive_get_request() const;
   stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> receive_get_request_raw() const;

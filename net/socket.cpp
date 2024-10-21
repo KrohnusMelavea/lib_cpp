@@ -28,13 +28,8 @@ WinSock:
 */
 
 namespace net {
- socket::socket() noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{}, port{}, protocol{net::protocol::tcp} {
-  #ifdef NET_HANDLE_ERR
-   if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    SPDLOG_ERROR("unhandled socket_error_code for ::socket - {}", lookup_enum_verbose(socket_error_code));
-   }
-  #endif
+ socket::socket() noexcept : socket_handle{NULL}, host{}, port{}, protocol{net::protocol::invalid_enum} {
+  
  }
  socket::socket(u32 const host) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{0}, protocol{net::protocol::tcp} {
   #ifdef NET_HANDLE_ERR
