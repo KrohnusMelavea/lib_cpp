@@ -7,7 +7,6 @@
 #include <utility>
 #include <string_view>
 #include <type_traits>
-#include <spdlog/spdlog.h>
 
 namespace stl {
  template <class T> class dynamic_array {

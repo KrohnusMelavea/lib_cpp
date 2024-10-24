@@ -8,7 +8,7 @@ namespace net {
   return c_ptr;
  }
  void http_request::read_body(std::string_view const request) noexcept {
-  
+
  }
 
  http_header const& http_request::header() const noexcept {

@@ -2,7 +2,7 @@
 
 #include "types.hpp"
 #include "http_content_type.hpp"
-#include <json/json.hpp>
+#include <nlohmann/json.hpp>
 
 namespace net {
  template <http_content_type type> struct content_enum_to_type {
