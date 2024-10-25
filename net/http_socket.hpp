@@ -6,6 +6,7 @@
 #include "stl/status_type.hpp"
 #include "stl/dynamic_array.hpp"
 #include "net/http_request.hpp"
+#include <nlohmann/json.hpp>
 
 namespace net {
  class http_socket {
@@ -27,7 +28,8 @@ namespace net {
 
   net::socket const& socket() const noexcept;
 
-  stl::status_type<net::socket_error_code, net::http_request> receive_request() const;
+  stl::status_type<net::socket_error_code, net::http_request> receive_request() const noexcept;
+  stl::status_type<net::socket_error_code> send_response(nlohmann::json const& json) const noexcept;
 
   stl::status_type<net::socket_error_code, std::string> receive_get_request() const;
   stl::status_type<net::socket_error_code, stl::dynamic_array<u08>> receive_get_request_raw() const;

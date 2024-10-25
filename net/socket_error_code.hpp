@@ -108,6 +108,8 @@ namespace net {
   wsa_qos_reserved_petype    = 11031, /* Reserved policy QoS element type. A reserved policy element was found in the QoS provider-specific buffer. */
 
   malformed_request = 16383, /* Custom status */
+
+  none = 65535,
  };
 
  inline constexpr std::array<std::pair<socket_error_code, std::string_view>, 97> SOCKET_ERROR_CODE_LOOKUP {
@@ -207,7 +209,7 @@ namespace net {
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_esdmodeobj,         "socket_error_code::wsa_qos_esdmodeobj" },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_eshaperateobj,      "socket_error_code::wsa_qos_eshaperateobj" },
 		std::pair<socket_error_code, std::string_view>{ socket_error_code::wsa_qos_reserved_petype,    "socket_error_code::wsa_qos_reserved_petype" },
-  std::pair<socket_error_code, std::string_view>{ socket_error_code::malformed_request,          "socekt_error_code::malformed_request" },
+  std::pair<socket_error_code, std::string_view>{ socket_error_code::malformed_request,          "socket_error_code::malformed_request" },
  };
 
  inline constexpr std::array<std::pair<socket_error_code, std::string_view>, 97> SOCKET_ERROR_CODE_DESCRIPTION_LOOKUP{

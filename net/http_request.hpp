@@ -2,17 +2,26 @@
 
 #include "http_header.hpp"
 #include "http_content.hpp"
+#include <string>
 #include <string_view>
+#include <unordered_map>
+#include <nlohmann/json.hpp>
 
 namespace net {
  class http_request {
  public:
   //http_request(std::string_view request) noexcept;
 
-  char const* read_header(std::string_view const request) noexcept;
-  void read_body(std::string_view const request) noexcept;
+  std::string resource;
+  std::unordered_map<std::string, std::string> header_fields;
+  nlohmann::json header_data;
 
-  http_header const& header() const noexcept;
+ template <class Self> auto&& header(this Self&& self) noexcept {
+  return std::forward<Self>(self).m_header;
+ }
+ template <class Self> auto&& content(this Self&& self) noexcept {
+  return std::forward<Self>(self).m_content;
+ }
 
  private:
   http_header m_header;

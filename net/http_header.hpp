@@ -8,9 +8,9 @@
 namespace net {
  struct http_header {
   std::string resource;
-  std::unordered_map<std::string, std::string> headers;
-  std::unordered_map<std::string, std::string> variables;
+  std::unordered_map<std::string, std::string> header_fields;
+  std::unordered_map<std::string, std::string> header_variables;
 
-  static std::tuple<http_header, char const*> scan(std::string_view const request) noexcept;
+  char const* scan(std::string_view const request) noexcept;
  };
 }

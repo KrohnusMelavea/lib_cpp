@@ -53,7 +53,9 @@ namespace net {
   stl::status_type<net::socket_error_code, u32> receive(stl::buffer const data) const noexcept;
   sock_err_ret_t shutdown() noexcept;
 
-  bool is_active() const noexcept;
+  [[nodiscard]] stl::status_type<net::socket_error_code, bool> has_read() const noexcept;
+
+  [[nodiscard]] bool is_active() const noexcept;
 
   static sock_err_ret_t init_backend() noexcept;
   static sock_err_ret_t deinit_backend() noexcept;

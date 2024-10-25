@@ -1,12 +1,10 @@
 #include "socket.hpp"
-#pragma warning(push, 0)
 #include <spdlog/spdlog.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <array>
 #include <string_view>
 #include <iostream>
-#pragma warning(pop)
 
 /*
 WinSock:
@@ -100,20 +98,25 @@ namespace net {
   }
  }
  sock_err_ret_t socket::close() noexcept {
+  this->socket_handle = 0;
   if (::closesocket(this->socket_handle) == SOCKET_ERROR) [[unlikely]] {
    return static_cast<net::socket_error_code>(::WSAGetLastError());
   } else {
    return net::socket_error_code::success;
   }
  }
- [[nodiscard]] sock_err_sock_ret_t socket::accept() const noexcept {
+ [[nodiscard]] stl::status_type<net::socket_error_code, net::socket> socket::accept() const noexcept {
   ::sockaddr_in sockaddr_in;
   auto length = static_cast<i32>(sizeof(sockaddr_in));
   auto const client_socket_handle = ::accept(this->socket_handle, reinterpret_cast<::sockaddr*>(&sockaddr_in), &length);
   if (client_socket_handle == INVALID_SOCKET) [[unlikely]] {
-   return {static_cast<net::socket_error_code>(::WSAGetLastError()), {}};
+   return stl::status_type<net::socket_error_code, net::socket>{ 
+    static_cast<net::socket_error_code>(::WSAGetLastError()), 
+    net::socket{} };
   } else [[likely]] {
-   return {net::socket_error_code::success, net::socket{client_socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port, this->protocol}};
+   return stl::status_type<net::socket_error_code, net::socket>{ 
+    net::socket_error_code::success, 
+    net::socket{client_socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port, this->protocol} };
   }
  }
  sock_err_ret_t socket::listen() const noexcept {
@@ -139,13 +142,13 @@ namespace net {
  stl::status_type<net::socket_error_code, u32> socket::receive(stl::buffer const data) const noexcept {
   auto const size = ::recv(this->socket_handle, reinterpret_cast<char*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
   if (size == SOCKET_ERROR) [[unlikely]] {
-   return {static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32};
+   return stl::status_type<net::socket_error_code, u32>{ static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32 };
   } else [[likely]] {
-   return {net::socket_error_code::success, static_cast<u32>(size)};
+   return stl::status_type<net::socket_error_code, u32>{ net::socket_error_code::success, static_cast<u32>(size) };
   }
  }
  sock_err_ret_t socket::shutdown() noexcept {
-  this->socket_handle = INVALID_SOCKET;
+  this->socket_handle = 0;
   if (::shutdown(this->socket_handle, SD_SEND) == SOCKET_ERROR) [[unlikely]] {
    return static_cast<net::socket_error_code>(::WSAGetLastError());
   } else [[likely]] {
@@ -153,7 +156,19 @@ namespace net {
   }
  }
 
- bool socket::is_active() const noexcept {
+ [[nodiscard]] stl::status_type<net::socket_error_code, bool> socket::has_read() const noexcept {
+  ::fd_set socket {
+   .fd_count = 1,
+  };
+  socket.fd_array[0] = this->socket_handle;
+  static constexpr ::timeval timeout { .tv_sec = 0, .tv_usec = 1000 };
+  if (::select(NULL, &socket, nullptr, nullptr, &timeout) == SOCKET_ERROR) [[unlikely]] {
+   return stl::status_type<net::socket_error_code, bool>{ static_cast<net::socket_error_code>(::WSAGetLastError()), false };
+  } else {
+   return stl::status_type<net::socket_error_code, bool>{ net::socket_error_code::success, socket.fd_count == 1 };
+  }
+ }
+ [[nodiscard]] bool socket::is_active() const noexcept {
   return this->socket_handle != INVALID_SOCKET;
  }
 
