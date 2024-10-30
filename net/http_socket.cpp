@@ -128,7 +128,7 @@ namespace net {
    std::string_view const parsable{ reinterpret_cast<char const*>(std::data(data)), std::size(data) };
    if (!http_request.content().parse(net::http_content_type::json, parsable)) [[unlikely]] {
     return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::malformed_request, net::http_request{} };
-   } else {
+   } else [[likely]] {
     return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::success, std::move(http_request) };
    }
   } else [[likely]] /* Everything's already been read */ {
@@ -187,7 +187,7 @@ namespace net {
   response[std::size(response) - 1] = 0;
   auto const result = this->send(stl::buffer{std::data(response), std::size(response)});
   return result.status;
-  /* Note: If going async, response is destructed at this point, so be weary */
+  /* Note: If going async, response is destructed at this point, so be wary */
  }
 
  stl::status_type<net::socket_error_code, net::http_socket> http_socket::create_server(u32 const host, u16 const port) {

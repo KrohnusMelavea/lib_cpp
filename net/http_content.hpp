@@ -29,7 +29,10 @@ namespace net {
    return *reinterpret_cast<content_enum_to_type_t<type>>(std::data(std::forward<Self>(self).memory));
   }
   template <class Self> auto&& get_json_content(this Self&& self) noexcept {
-   return *reinterpret_cast<content_enum_to_type_t<http_content_type::json>*>(std::data(std::forward<Self>(self).memory));
+   return *reinterpret_cast<std::conditional_t<
+    std::is_const_v<std::remove_reference_t<Self>>, 
+    content_enum_to_type_t<http_content_type::json> const, 
+    content_enum_to_type_t<http_content_type::json>>*>(std::data(std::forward<Self>(self).memory));
   }
 
   bool parse(http_content_type const type, std::string_view const data) noexcept;

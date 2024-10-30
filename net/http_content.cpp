@@ -5,10 +5,11 @@ namespace net {
  http_content::http_content() noexcept : type{http_content_type::invalid} {
 
  }
- http_content::http_content(http_content_type const type, auto&& content) noexcept : type{type} {
-  switch (this->type) {
+ http_content::http_content(http_content_type const type, auto&& content) noexcept {
+  switch (type) {
   case http_content_type::json: {
    (void)std::construct_at(reinterpret_cast<nlohmann::json*>(std::data(this->memory)), std::forward<decltype(content)>(content));
+   this->type = type;
    break;
   }
   }
@@ -20,6 +21,7 @@ namespace net {
    auto& that_object = *reinterpret_cast<nlohmann::json*>(std::data(http_content.memory));
    (void)std::construct_at(this_object_ptr, std::move(that_object));
    this->type = net::http_content_type::json;
+   break;
   }
   [[unlikely]] default: {
    this->type = net::http_content_type::invalid;
@@ -39,15 +41,15 @@ namespace net {
   switch (type) {
   case net::http_content_type::json: {
    try {
-    std::construct_at(reinterpret_cast<nlohmann::json*>(std::data(this->memory)), nlohmann::json::parse(data));
+    (void)std::construct_at(reinterpret_cast<nlohmann::json*>(std::data(this->memory)), nlohmann::json::parse(data));
    } catch (std::exception& e) {
-    std::cout << std::format("Failed Parsing JSON: {}", e.what());
+    std::cout << std::format("Failed Parsing JSON: {}\n{}\n", e.what(), data);
     return false;
    }
    this->type = type;
    return true;
   }
-  return false;
   }
+  return false;
  }
 }

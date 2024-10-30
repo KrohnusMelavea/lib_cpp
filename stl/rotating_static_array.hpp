@@ -7,8 +7,8 @@
 namespace stl {
  template <class T, std::size_t array_size> class rotating_static_array {
  public:
-  rotating_static_array() {
-
+  template <class Self> [[nodiscard]] auto&& operator[](std::size_t const i) noexcept {
+   return std::forward<Self>(self).m_data[(std::forward<Self>(self).m_front + i) % array_size];
   }
 
   void push(T&& value) noexcept {

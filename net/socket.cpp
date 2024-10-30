@@ -98,10 +98,13 @@ namespace net {
   }
  }
  sock_err_ret_t socket::close() noexcept {
-  this->socket_handle = 0;
   if (::closesocket(this->socket_handle) == SOCKET_ERROR) [[unlikely]] {
+   this->socket_handle = NULL;
+   std::cout << "closed badly\n";
    return static_cast<net::socket_error_code>(::WSAGetLastError());
   } else {
+   this->socket_handle = NULL;
+   std::cout << "closed\n";
    return net::socket_error_code::success;
   }
  }
@@ -148,7 +151,6 @@ namespace net {
   }
  }
  sock_err_ret_t socket::shutdown() noexcept {
-  this->socket_handle = 0;
   if (::shutdown(this->socket_handle, SD_SEND) == SOCKET_ERROR) [[unlikely]] {
    return static_cast<net::socket_error_code>(::WSAGetLastError());
   } else [[likely]] {

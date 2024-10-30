@@ -15,11 +15,11 @@ namespace timing {
  public:
   using timing_t = std::chrono::nanoseconds;
 
-  void update(stl::source_location const& source_location, timing_t const timing) noexcept;
+  void update(stl::source_location&& source_location, timing_t&& timing) noexcept;
 
-  static void callback(timing_archive& timing_archive, stl::source_location const& source_location, timing_t const timing) noexcept;
+  static void callback(timing_archive&& timing_archive, stl::source_location&& source_location, timing_t&& timing) noexcept;
 #ifdef CREATE_GLOBAL_TIMING_ARCHIVE
-  static void global_callback(stl::source_location const& source_location, timing_t const timing) noexcept;
+  static void global_callback(stl::source_location&& source_location, timing_t&& timing) noexcept;
 #endif
 
  private:

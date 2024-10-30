@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
 #include <type_traits>
 
 typedef std::int8_t   i08;
@@ -103,7 +104,7 @@ template <class T> concept IsANDAssignableWithSelf = requires(T a, T b) {
  a &= b;
 };
 
-template <class T> concept HasDataMethod = requires(T a) {
+template <typename T> concept HasDataMethod = requires(T a) {
  a.data();
 };
 template <class T> concept HasSizeMethod = requires(T a) {
@@ -112,6 +113,22 @@ template <class T> concept HasSizeMethod = requires(T a) {
 
 //Compound Concepts
 template <class T> concept IsSpanLike = requires(T a) {
- HasDataMethod<T>;
- HasSizeMethod<T>;
+ requires HasDataMethod<T>;
+ requires HasSizeMethod<T>;
 };
+
+constexpr bool is_hex(char const c) noexcept {
+ return ('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+}
+constexpr bool is_uuid(std::string_view const string) noexcept {
+ if (std::size(string) != 36) [[unlikely]] {
+  return false;
+ }
+ for (char const c : string) {
+  if (!::is_hex(c) && c != '-') [[unlikely]] {
+   return false;
+  }
+ }
+ return true;
+}
+

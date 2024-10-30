@@ -25,6 +25,7 @@ namespace stl::threadpool {
      this->m_last_worked = std::chrono::steady_clock::now();
     }
     if (std::chrono::steady_clock::now() - this->m_last_worked >= 10s) {
+     std::cout << std::format("Retiring Thread: {}\n", reinterpret_cast<std::size_t>(this));
      this->m_running = false;
     }
    }
@@ -39,8 +40,12 @@ namespace stl::threadpool {
    this->m_args = std::forward_as_tuple<Args&&...>(std::forward<Args>(args)...);
    this->m_working = true;
    if (!this->m_running) [[unlikely]] /* Revive the thread */ {
+    std::cout << std::format("Reviving Thread: {}\n", reinterpret_cast<std::size_t>(this));
+    this->join();
     this->m_running = true;
     this->m_thread = std::thread(&wthread::run, std::ref(*this));
+   } else {
+    std::cout << std::format("Reusing Thread: {}\n", reinterpret_cast<std::size_t>(this));
    }
   }
 
