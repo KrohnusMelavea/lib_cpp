@@ -7,7 +7,7 @@
 namespace stl::cvt {
  inline std::chrono::system_clock::time_point to_time_point(std::string_view const time) noexcept  {
   std::tm tm{};
-  tm.tm_sec = (time[16] - '0') * 10 + (time[17] - '0');
+  tm.tm_sec = (time[17] - '0') * 10 + (time[18] - '0');
   tm.tm_hour = (time[11] - '0') * 10 + (time[12] - '0');
   tm.tm_min = (time[14] - '0') * 10 + (time[15] - '0');
   tm.tm_mday = (time[8] - '0') * 10 + (time[9] - '0');
