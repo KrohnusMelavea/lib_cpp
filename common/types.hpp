@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <algorithm>
 #include <string_view>
 #include <type_traits>
 
@@ -117,18 +119,84 @@ template <class T> concept IsSpanLike = requires(T a) {
  requires HasSizeMethod<T>;
 };
 
-constexpr bool is_hex(char const c) noexcept {
- return ('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+inline constexpr bool is_alpha_lowercase(char const c) noexcept {
+ return 'a' <= c && c <= 'z';
 }
-constexpr bool is_uuid(std::string_view const string) noexcept {
- if (std::size(string) != 36) [[unlikely]] {
+inline constexpr bool is_alpha_uppercase(char const c) noexcept {
+ return 'A' <= c && c <= 'Z';
+}
+inline constexpr bool is_alpha(char const c) noexcept {
+ return is_alpha_lowercase(c) || is_alpha_uppercase(c);
+}
+inline constexpr std::array<char, 19> SPECIAL_CHARACTERS{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '/', '=', '?', '^', '_', '`', '{', '|', '}', '~'};
+inline constexpr bool is_special(char const c) noexcept {
+ return std::find(std::cbegin(SPECIAL_CHARACTERS), std::cend(SPECIAL_CHARACTERS), c) != std::cend(SPECIAL_CHARACTERS);
+}
+inline constexpr bool is_digit(char const c) noexcept {
+ return '0' <= c && c <= '9';
+}
+inline constexpr bool is_alphanumeric(char const c) noexcept {
+ return is_alpha(c) || is_digit(c);
+}
+inline constexpr bool is_printable(char const c) noexcept {
+ return is_alphanumeric(c) || is_special(c);
+}
+inline constexpr bool is_hex(char const c) noexcept {
+ return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+}
+
+inline constexpr bool is_uuid(std::string_view const uuid) noexcept {
+ if (std::size(uuid) != 36) [[unlikely]] {
   return false;
  }
- for (char const c : string) {
-  if (!::is_hex(c) && c != '-') [[unlikely]] {
+ for (char const c : uuid) {
+  if (!::is_hex(c) && c != '-') [[unlikely]] /* UUIDv4 may only contain hexidecimal and '-' characters */ {
    return false;
   }
  }
  return true;
 }
-
+constexpr bool is_email(std::string_view const email) noexcept {
+ if (std::size(email) < 5) [[unlikely]] /* Minimal email (a@b.c) is 5 characters  */ {
+  return false;
+ }
+ char const *ptr = std::data(email);
+ char const *end_ptr = ptr + std::size(email);
+ if (!(is_alpha(*ptr) || is_special(*ptr)) || *ptr == '.' || *ptr == '@') [[unlikely]] {
+  return false;
+ }
+ bool has_at = false;
+ bool has_end_dot = false;
+ while (++ptr != end_ptr) {
+  if (*ptr == '@') [[unlikely]] /* Post characters in Email are alphanumeric */ {
+   if (has_at) [[unlikely]] /* Email may have only one domain */ {
+    return false;
+   } else if (*(ptr - 1) == '.') [[unlikely]] /* Final character in local part of email may not be '.' */ {
+    return false;
+   } else if (ptr + 3 >= end_ptr) [[unlikely]] /* Shorted domain 'b.c' is 3 characters */ {
+    return false;
+   } else if (*(ptr + 1) == '.') [[unlikely]] /* Domain may not be empty */ {
+    return false;
+   } else [[likely]] {
+    continue;
+   }
+  } else if (*ptr == '.') {
+   if (ptr + 1 == end_ptr) [[unlikely]] /* Final character of email may not be '.' */ {
+    return false;
+   } else [[likely]] {
+    if (has_at) /* Domain must contain root zone */ {
+     has_end_dot = true;
+    }
+    continue;
+   }
+  } else if (!is_printable(*ptr)) [[unlikely]] /* Email may only contain printable characters */ {
+   return false;
+  } else [[likely]] {
+   continue;
+  }
+ }
+ return has_end_dot;
+}
+inline constexpr bool is_hex(std::string_view const hex) noexcept {
+ return std::find_if(std::cbegin(hex), std::cend(hex), [&](auto const c) noexcept { return !is_hex(c); }) == std::cend(hex);
+}

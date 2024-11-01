@@ -7,7 +7,7 @@
 namespace stl {
  template <class T, std::size_t array_size> class rotating_static_array {
  public:
-  template <class Self> [[nodiscard]] auto&& operator[](std::size_t const i) noexcept {
+  template <class Self> [[nodiscard]] auto&& operator[](this Self&& self, std::size_t const i) noexcept {
    return std::forward<Self>(self).m_data[(std::forward<Self>(self).m_front + i) % array_size];
   }
 
