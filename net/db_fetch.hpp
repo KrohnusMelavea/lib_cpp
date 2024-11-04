@@ -121,6 +121,9 @@ namespace net {
    std::chrono::duration_cast<std::chrono::milliseconds>(timing).count()); 
   });
 
+  if (!connection->isValid()) {
+   SPDLOG_ERROR("Invalid Connection");
+  }
   /* Set Schema */
   try { connection->setSchema(std::data(database)); } 
   catch (std::exception& e) {

@@ -33,7 +33,7 @@ namespace stl::threadpool {
      this->m_last_worked = std::chrono::steady_clock::now();
     } else if (!this->m_undying && std::chrono::steady_clock::now() - this->m_last_worked > 300s) [[unlikely]] /* Thread expired */ {
      this->m_running = false;
-    } else [[likely]] { std::this_thread::sleep_for(100ns); }
+    } else [[likely]] { std::this_thread::sleep_for(500us); }
    }
    SPDLOG_INFO("Retiring Thread: {}\n", this->pid());
   }
@@ -74,6 +74,7 @@ namespace stl::threadpool {
   }
 
   [[nodiscard]] u32 pid() const noexcept { return std::bit_cast<u32>(this->m_thread.get_id()); }
+  [[nodiscard]] auto const& args() const noexcept { return this->m_args; }
  
  private:
   std::thread m_thread{};
