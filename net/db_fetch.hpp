@@ -10,8 +10,8 @@
 #include <mutex>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 #include <type_traits>
-
 
 namespace net {
  enum class mysql_field_type : u08 {
@@ -33,7 +33,7 @@ namespace net {
   std::conditional_t<t == mysql_field_type::i64, long long,
   std::conditional_t<t == mysql_field_type::u64, unsigned long long,
   std::conditional_t<t == mysql_field_type::f64, long double,
-  std::conditional_t<t == mysql_field_type::str, sql::SQLString,
+  std::conditional_t<t == mysql_field_type::str, std::string,
   void>>>>>>>>;
  template <class T> auto consteval get_field_value() noexcept {
   if (std::is_same_v<T, std::istream*>) {
@@ -50,7 +50,7 @@ namespace net {
    return mysql_field_type::u64;
   } else if (std::is_same_v<T, long double>) {
    return mysql_field_type::f64;
-  } else if (std::is_same_v<T, sql::SQLString>) {
+  } else if (std::is_same_v<T, std::string>) {
    return mysql_field_type::str;
   } else {
    return mysql_field_type::none;
@@ -64,138 +64,115 @@ namespace net {
   using FTs = std::tuple<get_field_type<Args>...>;
 
   if constexpr (T == mysql_field_type::blob) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getBlob(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getBlob(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::boolean) {
-   try {
-    return std::tuple_cat(std::tuple<FT{}>{resource->getBoolean(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT{}>{resource->getBoolean(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::i32) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getInt(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getInt(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); }
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::u32) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getUInt(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getUInt(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::i64) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getInt64(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getInt64(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::u64) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getUInt64(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getUInt64(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::f64) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getDouble(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getDouble(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
   } else if constexpr (T == mysql_field_type::str) {
-   try {
-    return std::tuple_cat(std::tuple<FT>{resource->getString(i)}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
-   } catch (sql::SQLException& e) {
-    std::cout << std::format("SQL Error (Item #{}): {}\n", i, e.what());
+   try { return std::tuple_cat(std::tuple<FT>{resource->getString(i).move_to_string()}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource))); } 
+   catch (sql::SQLException& e) {
+    SPDLOG_ERROR("Thread {} SQL Fetch Error on Item #{}: {}", std::bit_cast<u32>(std::this_thread::get_id()), i, e.what());
     return std::tuple_cat(std::tuple<FT>{FT{}}, std::forward<FTs>(db_fetch_row<i + 1, Args...>(resource)));
    }
-  } else {
-   std::cout << "Invalid DB Fetch Type\n";
-  }
+  } else { SPDLOG_ERROR("Thread {} Attempted to Fetch Invalid DB Type: {}", std::bit_cast<u32>(std::this_thread::get_id()), static_cast<u32>(T)); }
  }
- template <mysql_field_type... Args> auto db_fetch(std::string_view const host_port, std::string_view const user, std::string_view const password, std::string_view const database, std::string_view const query) {
+ template <mysql_field_type... Args> auto db_fetch(sql::Connection* const connection, std::string_view const database, std::string_view const query) noexcept {
+  timing::scoped_timer timer([](auto&& location, auto&&timing) { 
+   SPDLOG_INFO("Thread {} at {}:line {}\n{}\nran for {}ms", 
+   std::bit_cast<u32>(std::this_thread::get_id()), 
+   std::filesystem::path(location.file_name).filename().string(), location.line, location.function_name,
+   std::chrono::duration_cast<std::chrono::milliseconds>(timing).count()); 
+  });
 
-  static auto *driver = ::get_driver_instance();
-    
-  //driver->threadInit();
-  
-  sql::Connection *connection = nullptr;
-  try {
-   connection = driver->connect(std::string(host_port), std::string(user), std::string(password));
-  } catch (std::exception& e) {
-   std::cout << std::format("Connection to DB Failed: {}\n", e.what());
-   //driver->threadEnd();
+  /* Set Schema */
+  try { connection->setSchema(std::data(database)); } 
+  catch (std::exception& e) {
+   SPDLOG_ERROR("Thread {} Setting DB Schema ({}) Failed: {}", std::bit_cast<u32>(std::this_thread::get_id()), database, e.what());
    return std::vector<std::tuple<get_field_type<Args>...>>{};
   }
-  if (connection == nullptr || !connection->isValid()) {
-   std::cout << "Connection to DB Failed\n";
-   //driver->threadEnd();
-   return std::vector<std::tuple<get_field_type<Args>...>>{};
-  }
-  
-  try {
-   connection->setSchema(std::string(database));
-  } catch (std::exception& e) {
-   std::cout << std::format("Failed to Set DB Schema: {}\n", e.what());
-   delete connection;
-   driver->threadEnd();
-   return std::vector<std::tuple<get_field_type<Args>...>>{};
-  }
-  
+  /* Create Statement */
   sql::Statement *statement = nullptr;
-  try {
-   statement = connection->createStatement();
-  } catch (std::exception& e) {
-   std::cout << std::format("Failed to Create DB Statement: {}\n", e.what());
-   delete connection;
-   driver->threadEnd();
+  try { statement = connection->createStatement(); } 
+  catch (std::exception& e) {
+   SPDLOG_ERROR("Thread {} Creating DB Statement Failed: {}", std::bit_cast<u32>(std::this_thread::get_id()), e.what());
    return std::vector<std::tuple<get_field_type<Args>...>>{};
   }
-  if (statement == nullptr) [[unlikely]] {
-   std::cout << "Failed to Create DB Statement\n";
-   delete connection;
-   driver->threadEnd();
-   return std::vector<std::tuple<get_field_type<Args>...>>{};
+  if (statement == nullptr) [[unlikely]] { 
+   SPDLOG_ERROR("Thread {} Creating DB Statement Failed", std::bit_cast<u32>(std::this_thread::get_id()));
+   return std::vector<std::tuple<get_field_type<Args>...>>{}; 
   }
-
+  /* Execute Query */
   sql::ResultSet *resource = nullptr;
-  try {
-   resource = statement->executeQuery(std::string(query));
-  } catch (std::exception& e) {
-   std::cout << std::format("Failed to Execute Query: {}\n", e.what());
+  try { resource = statement->executeQuery(std::data(query)); } 
+  catch (std::exception& e) {
+   SPDLOG_ERROR("Thread {} Executing DB Query ({}) Failed: {}", std::bit_cast<u32>(std::this_thread::get_id()), query, e.what());
    delete statement;
-   delete connection;
-   driver->threadEnd();
    return std::vector<std::tuple<get_field_type<Args>...>>{};
   }
   if (resource == nullptr) [[unlikely]] {
-   std::cout << "Failed to Execute Query\n";
+   SPDLOG_ERROR("Thread {} Executing DB Query ({}) Failed", std::bit_cast<u32>(std::this_thread::get_id()), query);
    delete statement;
-   delete connection;
-   driver->threadEnd();
    return std::vector<std::tuple<get_field_type<Args>...>>{};
   }
-
   std::vector<std::tuple<get_field_type<Args>...>> data;
-  while (resource->next()) {
-   data.push_back(db_fetch_row<1, Args...>(resource));
-  }
+  while (resource->next()) { data.push_back(db_fetch_row<1, Args...>(resource)); }
 
   delete resource;
   delete statement;
-  delete connection;
 
-  driver->threadEnd();
+  return data;
+ }
+ template <mysql_field_type... Args> auto db_fetch(std::string_view const hostport, std::string_view const username, std::string_view const password, std::string_view const database, std::string_view const query) {
+  auto *const driver = ::get_driver_instance();
+  sql::Connection *connection = nullptr;
+  try { connection = driver->connect(std::data(hostport), std::data(username), std::data(password)); }
+  catch (std::exception& e) {
+   SPDLOG_ERROR("Thread {} Connection to DB (hostport: {}; username: {}; password: {}) Failed: {}", std::bit_cast<u32>(std::this_thread::get_id()), hostport, username, password, e.what());
+   return std::vector<std::tuple<get_field_type<Args>...>>{};
+  }
+  if (connection == nullptr || !connection->isValid()) [[unlikely]] {
+   SPDLOG_ERROR("Thread {} Connection to DB (hostport: {}; username: {}; password: {}) Failed", std::bit_cast<u32>(std::this_thread::get_id()), hostport, username, password);
+   return std::vector<std::tuple<get_field_type<Args>...>>{};
+  } 
+  auto data = db_fetch<Args...>(connection, database, query);
+  delete connection;
   return data;
  }
 }

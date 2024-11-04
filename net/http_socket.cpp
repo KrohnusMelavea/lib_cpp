@@ -32,9 +32,6 @@ namespace net {
  }
  stl::status_type<net::socket_error_code, net::http_socket> http_socket::accept() const {
   auto client_st = this->m_socket.accept();
-  // std::array<u08, 8192> buffer;
-  // auto const receive_size_st = this->m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
-  // std::cout << std::string_view{reinterpret_cast<char*>(std::data(buffer)), receive_size_st.value};
   return { client_st.status, net::http_socket{client_st.value} };
  }
  stl::status_type<net::socket_error_code> http_socket::send(stl::buffer const data) const {
@@ -76,7 +73,6 @@ namespace net {
  }
 
  stl::status_type<net::socket_error_code, net::http_request> http_socket::receive_request() const noexcept {
-  std::cout << "Receiving Request\n";
   net::http_request http_request;
   std::array<u08, 8192> buffer;
   auto const receive_size_st = this->m_socket.receive(stl::buffer{std::data(buffer), std::size(buffer)});
@@ -86,7 +82,6 @@ namespace net {
   if (receive_size_st.value == 0) {
    return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::malformed_request, net::http_request{} };
   }
-  std::cout << std::string_view{reinterpret_cast<char*>(std::data(buffer)), receive_size_st.value};
   auto const receive_size = receive_size_st.value;
   auto& header = http_request.header();
   auto const c_ptr = header.scan(std::string_view{reinterpret_cast<char*>(std::data(buffer)), receive_size});
@@ -132,7 +127,6 @@ namespace net {
    }
 
    std::string_view const parsable{ reinterpret_cast<char const*>(std::data(data)), std::size(data) };
-   std::cout << parsable;
    if (!http_request.content().parse(net::http_content_type::json, parsable)) [[unlikely]] {
     return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::malformed_request, net::http_request{} };
    } else [[likely]] {
