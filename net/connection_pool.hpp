@@ -26,7 +26,7 @@ namespace net {
     SPDLOG_INFO("destructing_connection({})", index);
    }
   }
-  destructing_connection(destructing_connection&& destructing_connection) noexcept : m_index{destructing_connection.m_index}, m_connection{destructing_connection.m_connection}, m_callback{m_callback} { 
+  destructing_connection(destructing_connection&& destructing_connection) noexcept : m_index{destructing_connection.m_index}, m_connection{destructing_connection.m_connection}, m_callback{ destructing_connection.m_callback} {
    SPDLOG_INFO("destructing_connection(&&)");
    destructing_connection.m_connection = nullptr;
   }

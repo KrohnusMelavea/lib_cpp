@@ -11,7 +11,6 @@ namespace stl::ext {
   }
  };
  template <class T, std::size_t size, class... Args> constexpr std::array<T, size> array_init(Args&&... args) noexcept {
-  SPDLOG_INFO("Init-ing Array");
   return array_init_impl_wrapper<T, std::tuple<Args...>>::array_init_impl(std::forward_as_tuple<Args...>(std::forward<Args>(args)...), std::make_index_sequence<size>());
  }
 }
