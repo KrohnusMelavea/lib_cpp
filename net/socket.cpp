@@ -26,108 +26,52 @@ WinSock:
 */
 
 namespace net {
- socket::socket() noexcept : socket_handle{NULL}, host{}, port{}, protocol{net::protocol::invalid_enum} {
-  
- }
- socket::socket(u32 const host) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{0}, protocol{net::protocol::tcp} {
-  #ifdef NET_HANDLE_ERR
-   if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    SPDLOG_ERROR("unhandled socket_error_code for ::socket - {}", lookup_enum_verbose(socket_error_code));
-   }
-  #endif
- }
- socket::socket(u32 const host, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol))}, host{host}, port{0}, protocol{protocol} {
-  #ifdef NET_HANDLE_ERR
-   if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    SPDLOG_ERROR("unhandled socket_error_code for ::socket - {}", lookup_enum_verbose(socket_error_code));
-   }
-  #endif
- }
- socket::socket(u32 const host, u16 const port) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{port}, protocol{net::protocol::tcp} {
-  #ifdef NET_HANDLE_ERR
-   if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    SPDLOG_ERROR("unhandled socket_error_code for ::socket - {}", lookup_enum_verbose(socket_error_code));
-   }
-  #endif
- }
- socket::socket(u32 const host, u16 const port, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol))}, host{host}, port{port}, protocol{protocol} {
-  #ifdef NET_HANDLE_ERR
-   if (this->socket_handle == INVALID_SOCKET) [[unlikely]] {
-    auto const socket_error_code = static_cast<net::socket_error_code>(::WSAGetLastError());
-    SPDLOG_ERROR("unhandled socket_error_code for ::socket - {}", lookup_enum_verbose(socket_error_code));
-   }
-  #endif
- }
- socket::~socket() noexcept {
+ socket::socket() noexcept : socket_handle{NULL}, host{}, port{}, protocol{net::protocol::invalid_enum} {}
+ socket::socket(u32 const host) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{0}, protocol{net::protocol::tcp} {}
+ socket::socket(u32 const host, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol))}, host{host}, port{0}, protocol{protocol} {}
+ socket::socket(u32 const host, u16 const port) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol::tcp))}, host{host}, port{port}, protocol{net::protocol::tcp} {}
+ socket::socket(u32 const host, u16 const port, net::protocol const protocol) noexcept : socket_handle{::socket(AF_INET, SOCK_STREAM, static_cast<i32>(protocol))}, host{host}, port{port}, protocol{protocol} {}
 
- }
-
- sock_err_ret_t socket::bind() const noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code>         socket::bind() const noexcept {
   ::sockaddr_in const sockaddr_in {
    .sin_family = AF_INET,
    .sin_port = static_cast<u16>(((this->port & 0xff) << 8) | (this->port >> 8)),
-   .sin_addr = {
-    .S_un = {
-     .S_addr = this->host
-    }
-   }
-  };
+   .sin_addr = { .S_un = { .S_addr = this->host } } };
   if (::bind(socket_handle, reinterpret_cast<::sockaddr const*>(&sockaddr_in), sizeof(sockaddr_in)) == SOCKET_ERROR) [[unlikely]] {
    return static_cast<net::socket_error_code>(::WSAGetLastError());
-  } else [[likely]] {
-   return net::socket_error_code::success;
-  }
+  } else [[likely]] { return net::socket_error_code::success; }
  }
- stl::status_type<net::socket_error_code, u32> socket::send(stl::buffer const data) const noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code, u32>    socket::send(stl::buffer const data) const noexcept {
   auto const size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
-  if (size == SOCKET_ERROR) [[unlikely]] {
-   return {static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32};
-  } else [[likely]] {
-   return {net::socket_error_code::success, static_cast<u32>(size)};
-  }
+  if (size == SOCKET_ERROR) [[unlikely]] { return { static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32 }; } 
+  else [[likely]] { return { net::socket_error_code::success, static_cast<u32>(size) }; }
  }
- stl::status_type<net::socket_error_code, u32> socket::send(std::string_view const data) const noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code, u32>    socket::send(std::string_view const data) const noexcept {
   auto const size = ::send(socket_handle, reinterpret_cast<char const*>(std::data(data)), static_cast<i32>(std::size(data) + 1), 0);
-  if (size == SOCKET_ERROR) [[unlikely]] {
-   return {static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32};
-  } else [[likely]] {
-   return {net::socket_error_code::success, static_cast<u32>(size)};
-  }
+  if (size == SOCKET_ERROR) [[unlikely]] { return { static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32 }; }
+  else [[likely]] { return { net::socket_error_code::success, static_cast<u32>(size) }; }
  }
- sock_err_ret_t socket::close() noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code>         socket::close() noexcept {
   if (::closesocket(this->socket_handle) == SOCKET_ERROR) [[unlikely]] {
    this->socket_handle = NULL;
    return static_cast<net::socket_error_code>(::WSAGetLastError());
-  } else {
+  } else [[likely]] {
    this->socket_handle = NULL;
    return net::socket_error_code::success;
   }
  }
- [[nodiscard]] stl::status_type<net::socket_error_code, net::socket> socket::accept() const noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code, socket> socket::accept() const noexcept {
   ::sockaddr_in sockaddr_in;
   auto length = static_cast<i32>(sizeof(sockaddr_in));
   auto const client_socket_handle = ::accept(this->socket_handle, reinterpret_cast<::sockaddr*>(&sockaddr_in), &length);
-  if (client_socket_handle == INVALID_SOCKET) [[unlikely]] {
-   return stl::status_type<net::socket_error_code, net::socket>{ 
-    static_cast<net::socket_error_code>(::WSAGetLastError()), 
-    net::socket{} };
-  } else [[likely]] {
-   return stl::status_type<net::socket_error_code, net::socket>{ 
-    net::socket_error_code::success, 
-    net::socket{client_socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port, this->protocol} };
-  }
+  if (client_socket_handle == INVALID_SOCKET) [[unlikely]] { return { static_cast<net::socket_error_code>(::WSAGetLastError()), net::socket{} }; } 
+  else [[likely]] { return { net::socket_error_code::success, net::socket{client_socket_handle, sockaddr_in.sin_addr.S_un.S_addr, sockaddr_in.sin_port, this->protocol} }; }
  }
- sock_err_ret_t socket::listen() const noexcept {
-  if (::listen(this->socket_handle, SOMAXCONN) == SOCKET_ERROR) [[unlikely]] {
-   return static_cast<net::socket_error_code>(::WSAGetLastError());
-  } else [[likely]] {
-   return net::socket_error_code::success;
-  }
+ [[nodiscard]] stl::status_type<socket_error_code>         socket::listen() const noexcept {
+  if (::listen(this->socket_handle, SOMAXCONN) == SOCKET_ERROR) [[unlikely]] { return static_cast<net::socket_error_code>(::WSAGetLastError()); } 
+  else [[likely]] { return net::socket_error_code::success; }
  }
- sock_err_ret_t socket::connect() const noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code>         socket::connect() const noexcept {
   ::sockaddr_in const address {
    .sin_family = AF_INET,
    .sin_port = static_cast<u16>(((this->port & 0xff) << 8) | (this->port >> 8)),
@@ -135,53 +79,32 @@ namespace net {
   };
   if (::connect(this->socket_handle, reinterpret_cast<::sockaddr const*>(&address), sizeof(sockaddr_in)) == SOCKET_ERROR) [[unlikely]] {
    return static_cast<net::socket_error_code>(::WSAGetLastError());
-  } else [[likely]] {
-   return net::socket_error_code::success;
-  }
+  } else [[likely]] { return net::socket_error_code::success; }
  }
- 
- stl::status_type<net::socket_error_code, u32> socket::receive(stl::buffer const data) const noexcept {
+ [[nodiscard]] stl::status_type<socket_error_code, u32>    socket::receive(stl::buffer const data) const noexcept {
   auto const size = ::recv(this->socket_handle, reinterpret_cast<char*>(std::data(data)), static_cast<i32>(std::size(data)), 0);
-  if (size == SOCKET_ERROR) [[unlikely]] {
-   return stl::status_type<net::socket_error_code, u32>{ static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32 };
-  } else [[likely]] {
-   return stl::status_type<net::socket_error_code, u32>{ net::socket_error_code::success, static_cast<u32>(size) };
-  }
+  if (size == SOCKET_ERROR) [[unlikely]] { return { static_cast<net::socket_error_code>(::WSAGetLastError()), 0_u32 }; } 
+  else [[likely]] { return { net::socket_error_code::success, static_cast<u32>(size) }; }
  }
- sock_err_ret_t socket::shutdown() noexcept {
-  if (::shutdown(this->socket_handle, SD_SEND) == SOCKET_ERROR) [[unlikely]] {
-   return static_cast<net::socket_error_code>(::WSAGetLastError());
-  } else [[likely]] {
-   return net::socket_error_code::success;
-  }
+ [[nodiscard]] stl::status_type<socket_error_code>         socket::shutdown() noexcept {
+  if (::shutdown(this->socket_handle, SD_SEND) == SOCKET_ERROR) [[unlikely]] { return static_cast<net::socket_error_code>(::WSAGetLastError()); } 
+  else [[likely]] { return net::socket_error_code::success; }
  }
 
  [[nodiscard]] stl::status_type<net::socket_error_code, bool> socket::has_read() const noexcept {
-  ::fd_set socket {
-   .fd_count = 1,
-  };
+  ::fd_set socket { .fd_count = 1, };
   socket.fd_array[0] = this->socket_handle;
   static constexpr ::timeval timeout { .tv_sec = 0, .tv_usec = 1000 };
-  if (::select(NULL, &socket, nullptr, nullptr, &timeout) == SOCKET_ERROR) [[unlikely]] {
-   return stl::status_type<net::socket_error_code, bool>{ static_cast<net::socket_error_code>(::WSAGetLastError()), false };
-  } else {
-   return stl::status_type<net::socket_error_code, bool>{ net::socket_error_code::success, socket.fd_count == 1 };
-  }
+  if (::select(NULL, &socket, nullptr, nullptr, &timeout) == SOCKET_ERROR) [[unlikely]] { return { static_cast<net::socket_error_code>(::WSAGetLastError()), false }; } 
+  else { return stl::status_type<net::socket_error_code, bool>{ net::socket_error_code::success, socket.fd_count == 1 }; }
  }
- [[nodiscard]] bool socket::is_active() const noexcept {
-  return this->socket_handle != INVALID_SOCKET;
- }
+ [[nodiscard]] bool socket::is_active() const noexcept { return this->socket_handle != INVALID_SOCKET && this->socket_handle != NULL; }
 
- sock_err_ret_t socket::init_backend() noexcept {
-  return static_cast<net::socket_error_code>(::WSAStartup(MAKEWORD(2, 2), &wsa_data));
- }
- sock_err_ret_t socket::deinit_backend() noexcept {
+ [[nodiscard]] stl::status_type<net::socket_error_code> socket::init_backend() noexcept { return static_cast<net::socket_error_code>(::WSAStartup(MAKEWORD(2, 2), &wsa_data)); }
+ [[nodiscard]] stl::status_type<net::socket_error_code> socket::deinit_backend() noexcept {
   [[maybe_unused]] auto const result = ::WSACleanup();
-  if (::WSACleanup() == SOCKET_ERROR) [[unlikely]] {
-   return static_cast<net::socket_error_code>(::WSAGetLastError());
-  } else [[likely]] {
-   return net::socket_error_code::success;
-  }
+  if (::WSACleanup() == SOCKET_ERROR) [[unlikely]] { return static_cast<net::socket_error_code>(::WSAGetLastError()); } 
+  else [[likely]] { return net::socket_error_code::success; }
  }
 
  WSAData socket::wsa_data{};
