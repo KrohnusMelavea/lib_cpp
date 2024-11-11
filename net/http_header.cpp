@@ -1,6 +1,9 @@
 #include "http_header.hpp"
 #include "http_method.hpp"
 #include "stl/cvt/to_hex_string.hpp"
+#include <spdlog/spdlog.h>
+#include <thread>
+#include <numeric>
 #include <iostream>
 
 enum class scan_status : u08 {
@@ -102,7 +105,7 @@ namespace net {
    }
   });
   if (http_method == http_method::INVALID) [[unlikely]] {
-   std::cout << "Invalid HTTP Method\n";
+   SPDLOG_ERROR("Thread {}: Invalid HTTP Method", std::bit_cast<u32>(std::this_thread::get_id()));
    return nullptr;
   }
 
@@ -115,7 +118,7 @@ namespace net {
    return std::string_view{""};
   });
   if (std::size(resource) == 0) [[unlikely]] /* Not allowed, as empty resource is denoted as '/' */ {
-   std::cout << "Empty Resource\n";
+   SPDLOG_ERROR("Thread {}: Empty Resource", std::bit_cast<u32>(std::this_thread::get_id()));
    return nullptr;
   }
   this->resource = resource;

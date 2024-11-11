@@ -1,6 +1,7 @@
 #include "http_socket.hpp"
 #include "stl/cvt/to_string.hpp"
 #include "stl/cvt/try_parse.hpp"
+#include <spdlog/spdlog.h>
 #include <array>
 #include <iostream>
 
@@ -93,13 +94,13 @@ namespace net {
    return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::success, std::move(http_request) };
   }
   auto const& content_type = content_type_it->second;
-  if (content_type != "application/json") [[unlikely]] {
-   std::cout << std::format("Unimplemented Content-Type: {}\n", content_type);
-   //return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::success, std::move(http_request) };
+  if (!content_type.contains("application/json")) [[unlikely]] {
+   SPDLOG_ERROR("Thread {} Client ({}:{}): Unimplemented Content-Type: {}\n", std::bit_cast<u32>(std::this_thread::get_id()), net::convert_ipv4_u32_to_string(this->m_socket.host), this->m_socket.port, content_type);
+   return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::success, std::move(http_request) };
   }
   auto const content_length_it = header.header_fields.find("Content-Length");
   if (content_length_it == std::cend(header.header_fields)) [[unlikely]] /* Need to keep scanning until you get it all */ {
-   std::cout << "Unimplemeneted: Scan network input in case there's not Content-Length field\n";
+   std::cout << "Unimplemeneted: Scan network input in case there's no Content-Length field\n";
    return stl::status_type<net::socket_error_code, net::http_request>{ net::socket_error_code::none, net::http_request{} };
   }
   auto const maybe_content_length = net::cvt::try_parse_u64(content_length_it->second);

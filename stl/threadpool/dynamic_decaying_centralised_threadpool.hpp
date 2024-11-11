@@ -47,20 +47,17 @@ namespace stl::threadpool {
   ~dynamic_decaying_centralised_threadpool() noexcept { this->stop(); }
 
   void stop() noexcept {
-   // (void)std::for_each(std::begin(this->m_wthreads), std::end(this->m_wthreads), std::mem_fn(&wthread_t::stop));
-   // (void)std::for_each(std::begin(this->m_wthreads), std::end(this->m_wthreads), std::mem_fn(&wthread_t::join));
    std::ranges::for_each(this->m_wthreads, std::mem_fn(&wthread_t::stop));
    std::ranges::for_each(this->m_wthreads, std::mem_fn(&wthread_t::join));
   }
-  void assign(callable_t&& callable, Args&&... args) {
+  void assign(auto&& callable, auto&&... args) noexcept {
    auto const [threads, thread_count] = this->get_first_available_threads();
    if (thread_count == NULL) [[unlikely]] {
     SPDLOG_INFO("ThreadPool Full. Pushing to JobQueue");
     this->m_jobqueue.emplace(std::forward<callable_t>(callable), std::forward<Args>(args)...);
     return;
-   } else {
+   } else [[likely]] {
     (void)threads[0]->assign(std::forward<callable_t>(callable), std::forward<Args>(args)...);
-    //for (auto&& wthread : threads | std::views::drop(1)) { (void)wthread->prefetch(); }
     std::ranges::for_each(threads | std::views::drop(1), std::mem_fn(&wthread_t::prefetch));
    }
   }
@@ -70,25 +67,23 @@ namespace stl::threadpool {
    /* Assign jobs to running, non-working threads */
    for (auto&& wthread : this->m_wthreads | std::views::filter([](auto&& wthread) noexcept { return wthread.running() && !wthread.working(); })) {
     if (this->m_jobqueue.empty()) { break; }
-    //if (!(wthread.running() && !wthread.working())) { continue; }
     std::apply(&wthread_t::assign, std::tuple_cat(std::forward_as_tuple<wthread_t>(wthread), std::forward<job_t>(this->m_jobqueue.pop())));
    }
    /* Assign remaining jobs to non-running threads */
    for (auto&& wthread : this->m_wthreads | std::views::filter([](auto&& wthread) noexcept { return !wthread.working(); })) {
     if (this->m_jobqueue.empty()) { break; }
-    //if (wthread.working()) { continue; }
     std::apply(&wthread_t::assign, std::tuple_cat(std::forward_as_tuple<wthread_t>(wthread), std::forward<job_t>(this->m_jobqueue.pop())));
    }
   }
 
-  bool has_jobs() noexcept { return !this->m_jobqueue.empty(); }
+  [[nodiscard]] bool has_jobs() noexcept { return !this->m_jobqueue.empty(); }
 
-  std::span<wthread_t const> wthreads() const noexcept { return this->m_wthreads; }
+  [[nodiscard]] std::span<wthread_t const> wthreads() const noexcept { return this->m_wthreads; }
 
  private:
   [[nodiscard]] static bool is_running_and_not_working(wthread_t const& wthread) noexcept { return wthread.running() && !wthread.working(); }
   [[nodiscard]] static bool is_not_running(wthread_t const& wthread) noexcept { return !wthread.running(); }
-  std::tuple<std::array<wthread_t*, 8>, std::size_t> get_first_available_threads() noexcept {
+  [[nodiscard]] std::tuple<std::array<wthread_t*, 8>, std::size_t> get_first_available_threads() noexcept {
    std::size_t count = 0;
    std::array<wthread_t*, 8> available_threads;
    for (auto&& wthread : this->m_wthreads | std::views::filter(&is_running_and_not_working)) {

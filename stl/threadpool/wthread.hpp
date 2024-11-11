@@ -27,8 +27,8 @@ namespace stl::threadpool {
    SPDLOG_INFO("Reviving Thread: {}", std::bit_cast<u32>(std::this_thread::get_id()));
    while (this->m_running) {
     if (this->m_working) [[unlikely]] /* Thread has newly assigned work */ {
-     if constexpr (std::is_same_v<shared_resource_t, void>) { std::apply(this->m_callable, this->m_args); }
-     else if constexpr (!std::is_same_v<shared_resource_t, void>) { std::apply(this->m_callable, std::tuple_cat(std::forward_as_tuple(&this->m_resource), this->m_args)); }
+     if constexpr (std::is_same_v<shared_resource_t, void>) { (void)std::apply(this->m_callable, this->m_args); }
+     else { (void)std::apply(this->m_callable, std::tuple_cat(std::forward_as_tuple(&this->m_resource), std::forward<std::tuple<Args...>>(this->m_args)));  }
      this->m_working = false;
      this->m_last_worked = std::chrono::steady_clock::now();
     } else if (!this->m_undying && std::chrono::steady_clock::now() - this->m_last_worked > 300s) [[unlikely]] /* Thread expired */ {
@@ -38,7 +38,7 @@ namespace stl::threadpool {
    SPDLOG_INFO("Retiring Thread: {}\n", this->pid());
   }
 
-  void assign(callable_t&& callable, Args&&... args) noexcept {
+  void assign(auto&& callable, auto&&... args) noexcept {
    this->m_callable = std::forward<callable_t>(callable);
    this->m_args = std::make_tuple(std::forward<Args>(args)...);
    this->m_working = true;
