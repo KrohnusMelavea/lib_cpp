@@ -20,15 +20,12 @@ namespace net {
    std::chrono::duration_cast<std::chrono::milliseconds>(timing).count()); 
   });
 
-  std::cout << "a\n";
-
   /* Set Schema */
   try { connection->setSchema(std::data(database)); } 
   catch (std::exception& e) {
    SPDLOG_ERROR("Thread {} Setting DB Schema ({}) Failed: {}", std::bit_cast<u32>(std::this_thread::get_id()), database, e.what());
    return;
   }
-  std::cout << "b\n";
   /* Create Statement */
   auto *const statement = std::invoke([&] () noexcept -> sql::Statement* {
    try { return connection->createStatement(); } 
@@ -37,12 +34,10 @@ namespace net {
     return nullptr;
    }
   });
-  std::cout << "c\n";
   if (statement == nullptr) [[unlikely]] { return; }
   /* Execute Query */
   try { statement->execute(std::data(query)); } 
   catch (std::exception& e) { SPDLOG_ERROR("Thread {} Executing DB Query ({}) Failed: {}", std::bit_cast<u32>(std::this_thread::get_id()), query, e.what()); }
-  std::cout << "d\n";
 
   delete statement;
  }
