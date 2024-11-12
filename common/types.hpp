@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <string_view>
 #include <type_traits>
+#include "stl/string_literal.hpp"
 
 typedef std::int8_t   i08;
 typedef std::int16_t  i16;
@@ -200,3 +201,8 @@ constexpr bool is_email(std::string_view const email) noexcept {
 inline constexpr bool is_hex(std::string_view const hex) noexcept {
  return std::find_if(std::cbegin(hex), std::cend(hex), [&](auto const c) noexcept { return !is_hex(c); }) == std::cend(hex);
 }
+
+template <stl::string_literal str> bool is_datetime(std::string_view const dt) noexcept {
+ return false;
+}
+extern template bool is_datetime<"YYYY-MM-DD hh:mm:ss">(std::string_view const dt) noexcept;
