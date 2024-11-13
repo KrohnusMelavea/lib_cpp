@@ -104,6 +104,11 @@ namespace net {
    else { return { socket_error_code::success, std::move(request) }; }
   }
  }
+ [[nodiscard]] stl::status_type<socket_error_code> http_socket::send_response() const noexcept {
+  auto const send_response = this->m_socket.send("HTTP/1.1 200 OK\r\n\r\n");
+  if (send_response.status != socket_error_code::success) [[unlikely]] { return send_response.status; }
+  else [[likely]] { return socket_error_code::success; }
+ } 
  [[nodiscard]] stl::status_type<socket_error_code> http_socket::send_response(nlohmann::json const& data) const noexcept {
   auto const dumpy = data.dump();
   auto response = std::format("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", std::size(dumpy), dumpy);

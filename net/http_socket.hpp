@@ -32,6 +32,7 @@ namespace net {
   [[nodiscard]] socket const& socket() const noexcept;
 
   [[nodiscard]] stl::status_type<socket_error_code, http_request> receive_request() const noexcept;
+  [[nodiscard]] stl::status_type<socket_error_code>               send_response() const noexcept;
   [[nodiscard]] stl::status_type<socket_error_code>               send_response(nlohmann::json const& json) const noexcept;
 
   [[nodiscard]] static stl::status_type<socket_error_code, http_socket> create_server(u32 const host, u16 const port);
