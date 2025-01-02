@@ -81,8 +81,13 @@ scan_status scan_to_amps_or_crlf_or_space(auto& it, auto end) noexcept {
   }
  }
 }
-void scan_past_space(auto& it, auto end) noexcept {
+scan_status scan_past_space(auto& it, auto end) noexcept {
  for (; it < end && *it == ' '; ++it);
+ if (it == end) [[unlikely]] {
+  return scan_status::out_of_bounds;
+ } else [[likely]] {
+  return scan_status::success;
+ }
 }
 
 namespace net {
@@ -178,7 +183,9 @@ namespace net {
     return nullptr;
    }
 
-   ::scan_past_space(c_it, std::end(request));
+   if (::scan_past_space(c_it, std::end(request)) != scan_status::success) [[unlikely]] {
+    return nullptr;
+   }
    auto const header_value_start = c_it;
    if (scan_to_crlf(c_it, std::end(request)) != scan_status::success) [[unlikely]] {
     std::cout << "Weird Header Value\n";

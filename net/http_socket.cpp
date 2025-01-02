@@ -100,7 +100,10 @@ namespace net {
    if (!request.content().parse(http_content_type::json, parsable)) [[unlikely]] { return { socket_error_code::malformed_request, http_request{} }; } 
    else [[likely]] { return { socket_error_code::success, std::move(request) }; }
   } else [[likely]] /* Everything's already been read */ {
-   if (!request.content().parse(http_content_type::json, std::string_view{c_ptr, content_length})) [[unlikely]] { return { socket_error_code::malformed_request, http_request{} }; } 
+   if (!request.content().parse(http_content_type::json, std::string_view{c_ptr, content_length})) [[unlikely]] {
+    SPDLOG_INFO("Malformed Content: {}", std::string_view{ c_ptr, content_length });
+    return { socket_error_code::malformed_request, http_request{} }; 
+    } 
    else { return { socket_error_code::success, std::move(request) }; }
   }
  }

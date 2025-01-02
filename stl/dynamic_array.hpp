@@ -12,8 +12,15 @@ namespace stl {
  template <class T> class dynamic_array {
  public:
   dynamic_array() noexcept = default;
-  dynamic_array(T* const data, std::size_t const size) noexcept : m_data{data}, m_size{size} {}
-  dynamic_array(T* const start, T* const end) requires(std::is_trivial_v<T> || std::is_copy_assignable_v<T>) : m_size{static_cast<std::size_t>(end - start)} {
+  dynamic_array(T* const data, std::size_t const size) noexcept : 
+   m_data{data}, 
+   m_size{size} 
+  {
+
+  }
+  dynamic_array(T* const start, T* const end) requires(std::is_trivial_v<T> || std::is_copy_assignable_v<T>) : 
+   m_size{static_cast<std::size_t>(end - start)}
+  {
    if constexpr (std::is_trivial_v<T>) {
     this->m_data = reinterpret_cast<T*>(std::memcpy(new T[this->m_size], start, sizeof(T) * this->m_size));
     return;
@@ -26,8 +33,15 @@ namespace stl {
     return;
    }
   }
-  dynamic_array(std::size_t const size) noexcept : m_data{new T[size]}, m_size{size} {}
-  dynamic_array(dynamic_array const& dynamic_array) : m_size{dynamic_array.m_size} {
+  dynamic_array(std::size_t const size) noexcept : 
+   m_data{new T[size]}, 
+   m_size{size} 
+  {
+
+  }
+  dynamic_array(dynamic_array const& dynamic_array) : 
+   m_size{dynamic_array.m_size}
+  {
    if constexpr (std::is_trivial_v<T>) {
     this->m_data = reinterpret_cast<T*>(std::memcpy(new T[this->m_size], dynamic_array.m_data, this->m_size));
     return;
@@ -40,20 +54,22 @@ namespace stl {
     return;
    }
   }
-  dynamic_array(dynamic_array&& dynamic_array) noexcept : m_data{dynamic_array.m_data}, m_size{dynamic_array.m_size} { 
+  dynamic_array(dynamic_array&& dynamic_array) noexcept : 
+   m_data{dynamic_array.m_data}, 
+   m_size{dynamic_array.m_size} 
+  { 
    dynamic_array.m_data = nullptr; 
   }
-  ~dynamic_array() noexcept { delete[] this->m_data; }
+  ~dynamic_array() noexcept { 
+   delete[] this->m_data; 
+  }
 
   explicit operator std::string_view() const {
    return std::string_view{reinterpret_cast<char*>(this->m_data), this->m_size}; /* Includes null-terminator */
   }
 
-  auto const& operator[](std::size_t const i) const noexcept {
-   return this->m_data[i];
-  }
-  auto& operator[](std::size_t const i) noexcept {
-   return this->m_data[i];
+  template <class Self> auto&& operator[](this Self&& self, std::size_t const index) noexcept {
+   return std::forward<Self>(self).m_data[index];
   }
 
   auto& operator=(dynamic_array const& dynamic_array) noexcept requires(std::is_trivial_v<T> || std::is_copy_assignable_v<T>) {
@@ -179,16 +195,25 @@ namespace stl {
    return std::span{ data, this->m_size };
   }
 
-  auto begin() noexcept { return this->m_data; }
-  auto end() noexcept { return this->m_data + this->m_size; }
-  auto const begin() const noexcept { return this->m_data; }
-  auto const end() const noexcept { return this->m_data + this->m_size; }
-  auto cbegin() const noexcept { return this->m_data; }
-  auto cend() const noexcept{ return this->m_data + this->m_size; }
+  template <class Self> auto begin(this Self&& self) noexcept {
+   return std::forward<Self>(self).m_data;
+  }
+  template <class Self> auto end(this Self&& self) noexcept {
+   return std::forward<Self>(self).m_data + std::forward<Self>(self).m_size;
+  }
+  auto const cbegin() const noexcept { 
+   return this->m_data;
+  }
+  auto const cend() const noexcept { 
+   return this->m_data + this->m_size;
+  }
 
-  auto data() noexcept { return this->m_data; }
-  auto data() const noexcept { return this->m_data; }
-  auto size() const noexcept { return this->m_size; }
+  template <class Self> auto&& data(this Self&& self) noexcept {
+   return std::forward<Self>(self).m_data;
+  }
+  auto size() const noexcept { 
+   return this->m_size; 
+  }
 
  private:
   T* m_data;

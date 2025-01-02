@@ -1,4 +1,5 @@
 #include "http_content.hpp"
+#include <spdlog/spdlog.h>
 #include <iostream>
 
 namespace net {
@@ -43,7 +44,7 @@ namespace net {
    try {
     (void)std::construct_at(reinterpret_cast<nlohmann::json*>(std::data(this->memory)), nlohmann::json::parse(data));
    } catch (std::exception& e) {
-    std::cout << std::format("Failed Parsing JSON: {}\n{}\n", e.what(), data);
+    SPDLOG_ERROR("Failed parsing JSON: {}\n{}", e.what(), data);
     return false;
    }
    this->type = type;

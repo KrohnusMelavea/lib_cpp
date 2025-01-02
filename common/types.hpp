@@ -1,7 +1,9 @@
 #pragma once
 
 #include <array>
+#include <tuple>
 #include <cstdint>
+#include <utility>
 #include <algorithm>
 #include <string_view>
 #include <type_traits>
@@ -206,3 +208,23 @@ template <stl::string_literal str> bool is_datetime(std::string_view const dt) n
  return false;
 }
 extern template bool is_datetime<"YYYY-MM-DD hh:mm:ss">(std::string_view const dt) noexcept;
+
+template <std::size_t offset, class sequence> struct offset_sequence;
+template <std::size_t offset, std::size_t... integers> 
+struct offset_sequence<offset, std::index_sequence<integers...>> {
+ using type = std::index_sequence<integers + offset...>;
+};
+template <std::size_t offset, class sequence> 
+using offset_sequence_t = typename offset_sequence<offset, sequence>::type;
+
+template <class Tuple, std::size_t a, class sequence> struct tuple_subset_impl;
+template <class Tuple, std::size_t a, std::size_t... indices> 
+struct tuple_subset_impl<Tuple, a, std::index_sequence<indices...>> {
+ using type = std::tuple<typename std::tuple_element<indices, Tuple>::type...>;
+};
+template <class Tuple, std::size_t a, std::size_t b> 
+struct tuple_subset {
+ using type = tuple_subset_impl<Tuple, a, offset_sequence_t<a, std::make_index_sequence<b - a>>>::type;
+};
+template <class Tuple, std::size_t a, std::size_t b = std::tuple_size_v<Tuple>> 
+using tuple_subset_t = tuple_subset<Tuple, a, b>::type;
