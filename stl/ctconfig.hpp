@@ -1,6 +1,7 @@
 #pragma once
 
 #define READ_CONFIG(config, key) (stl::ctconfig<>::get<(config), (key)>())
+#define CHECK_CONFIG(config, key) ((config).find<(key)>() != std::numeric_limits<std::size_t>::max())
 
 #include "types.hpp"
 #include "tuple.hpp"
@@ -59,6 +60,10 @@ namespace stl {
     config.keys[0][i] = 0;
    }
    return config;
+  }
+
+  template <cstring str> consteval std::size_t find() const noexcept {
+   return std::numeric_limits<std::size_t>::max();
   }
 
   template <auto config, cstring str> static consteval auto&& get() noexcept {

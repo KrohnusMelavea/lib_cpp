@@ -4,7 +4,7 @@
 namespace file {
  stl::dynamic_array<u08> read_file(std::string_view const file_path) noexcept {
   thread_local std::array<u08, 16384> buffer;
-  stl::dynamic_array<u08> file_contents;
+  stl::dynamic_array<u08> file_contents{};
   byte_reader reader(file_path);
   while (true) {
    auto result = reader.read(stl::buffer{std::data(buffer), std::size(buffer)});

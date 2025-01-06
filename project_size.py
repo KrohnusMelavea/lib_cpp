@@ -1,6 +1,6 @@
 import os
 
-folders = "common", "file", "meta", "net", "stl", "timing"
+folders = "common", "file", "meta", "net", "stl", "timing", "math"
 
 file_directories = [(directory.replace('\\', '/'), [f"/{file}" for file in files]) for folder in folders for directory, _, files in os.walk(folder)]
 max_directory_length = max(map(len, (file_path[0] for file_path in file_directories)))

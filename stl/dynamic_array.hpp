@@ -153,15 +153,18 @@ namespace stl {
   }
   void grow(stl::buffer const data) noexcept requires(std::is_trivial_v<T> || std::is_move_assignable_v<T> || std::is_copy_assignable_v<T>) {
    auto const new_data = new T[this->m_size + std::size(data)];
+   
    if constexpr (std::is_trivial_v<T>) {
     (void)std::memcpy(new_data, this->m_data, this->m_size);
-    (void)std::memcpy(new_data, reinterpret_cast<T*>(std::data(data)) + this->m_size, std::size(data));
+    (void)std::memcpy(new_data + this->m_size, reinterpret_cast<T*>(std::data(data)), std::size(data));
    } else {
     for (std::size_t i = 0; i < this->m_size; ++i) {
      if constexpr (std::is_move_assignable_v<T>) {
       new_data[i] = std::move(this->m_data[i]);
-     } else if constexpr (std::is_copy_assignable<T>) {
+     } else if constexpr (std::is_copy_assignable_v<T>) {
       new_data[i] = this->m_data[i];
+     } else {
+      static_assert(false, "T is not assignable");
      }
     }
     for (std::size_t i = 0; i < std::size(data); ++i) {
