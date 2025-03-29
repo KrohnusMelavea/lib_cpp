@@ -1,12 +1,12 @@
 #pragma once
 
 #include "types.hpp"
+#include "directory_walker_data.hpp"
+#include "directory_walker_iterator.hpp"
 #include "stl/ctconfig.hpp"
-#include "file/directory_walker_iterator.hpp"
-#include <string_view>
-#include <minwinbase.h>
 #include <array>
 #include <string_view>
+#include <print>
 
 
 /*
@@ -20,51 +20,74 @@ Win32 Data Structures:
 
 namespace file {
  template <stl::ctconfig config> struct directory_walker {
-  ::WIN32_FIND_DATAA& data;
-  std::array<char[256], 16>& file_paths;
-  std::array<std::size_t, 16>& file_path_lengths;
-  std::array<void*, 16>& file_iterator_handles;
-  char (&file_path)[256];
-  std::size_t file_path_length;
-  std::string_view const& directory;
+  void operator=(auto) { 
+    
+  }
 
   auto begin() noexcept {
-   auto walker = directory_walker_iterator<config>{ this->data, this->file_paths, this->file_path_lengths, this->file_iterator_handles, this->file_path, this->file_path_length, this->directory, 0 };
+   directory_walker_iterator<config> walker{};
    walker.fetch();
    return walker;
   }
   iterator_sentinel end() noexcept {
-   return {};
+   return iterator_sentinel{};
   }
  };
 
  template <stl::ctconfig config> auto walk_directory(std::string_view const directory) noexcept {
-  thread_local ::WIN32_FIND_DATAA data;
-  thread_local std::array<char[256], 16> file_paths;
-  thread_local std::array<std::size_t, 16> file_path_lengths;
-  thread_local std::array<void*, 16> file_iterator_handles;
-  thread_local char file_path[256];
+  auto&& directory_walker_data = file::directory_walker_data::get_thread_instance();
+  auto&& data = directory_walker_data.data;
+  auto&& file_iterator_handles = directory_walker_data.file_iterator_handles;
+  auto&& file_paths = directory_walker_data.file_paths;
+  auto&& file_path_lengths = directory_walker_data.file_path_lengths;
+  auto&& file_path = directory_walker_data.file_path;
+  auto&& file_path_length = directory_walker_data.file_path_length;
+  directory_walker_data.directory_depth = 0;
 
-  (void)std::memcpy(file_paths[0], std::data(directory), std::size(directory));
+  (void)std::memcpy(
+   file_paths[0], 
+   std::data(directory), 
+   std::size(directory)
+  );
   if (file_paths[0][std::size(directory) - 1] == '\\') /* Directory is suffixed with '\' */ [[likely]] {
-   append_unslashed_path_suffix(file_paths[0], std::size(directory));
+   append_unslashed_path_suffix(
+    file_paths[0], 
+    std::size(directory)
+   );
    file_path_lengths[0] = std::size(directory);
   } else [[unlikely]] /* Directory is not suffixed with '\' */ {
-   append_slashed_path_suffix(file_paths[0], std::size(directory));
+   append_slashed_path_suffix(
+    file_paths[0], 
+    std::size(directory)
+   );
    file_path_lengths[0] = std::size(directory) + 1;
   }
-  file_iterator_handles[0] = ::FindFirstFileA(file_paths[0], &data);
-  (void)::FindNextFileA(file_iterator_handles[0], &data);
-  (void)::FindNextFileA(file_iterator_handles[0], &data);
+  file_iterator_handles[0] = ::FindFirstFileA(
+   file_paths[0], 
+   &data
+  );
+  (void)::FindNextFileA(
+   file_iterator_handles[0], 
+   &data
+  ); /* Skip Current Path (".") */
+
   if (file_iterator_handles[0] == reinterpret_cast<void*>(-1)) [[unlikely]] /* Folder Empty */ {
    file_iterator_handles[0] = nullptr;
   }
-  auto const file_name_length = std::strlen(data.cFileName);
-  (void)std::memcpy(file_path, file_paths[0], file_path_lengths[0]);
-  (void)std::memcpy(file_path + file_path_lengths[0], data.cFileName, file_name_length);
-  file_path[file_path_lengths[0] + file_name_length] = 0;
+  file_path_length = std::strlen(data.cFileName);
+  (void)std::memcpy(
+   file_path, 
+   file_paths[0], 
+   file_path_lengths[0]
+  ); /* Copy Path */
+  (void)std::memcpy(
+   file_path + file_path_lengths[0], 
+   data.cFileName, 
+   file_path_length
+  ); /* Copy File Name */
+  file_path[file_path_lengths[0] + file_path_length] = '\0';
 
-  return directory_walker<config>{ data, file_paths, file_path_lengths, file_iterator_handles, file_path, file_name_length, directory };
+  return directory_walker<config>{};
  }
 }
 

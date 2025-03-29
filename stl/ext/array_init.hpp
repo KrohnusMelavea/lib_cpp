@@ -2,7 +2,6 @@
 
 #include "types.hpp"
 #include <array>
-#include <spdlog/spdlog.h>
 
 namespace stl::ext {
  template <class T, class Args> struct array_init_impl_wrapper {

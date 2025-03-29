@@ -6,12 +6,16 @@
 #include <cstdlib>
 #include <utility>
 #include <string_view>
+#include <print>
 #include <type_traits>
 
 namespace stl {
  template <class T> class dynamic_array {
  public:
-  dynamic_array() noexcept = default;
+  dynamic_array() noexcept {
+   this->m_data = nullptr;
+   this->m_size = 0;
+  }
   dynamic_array(T* const data, std::size_t const size) noexcept : 
    m_data{data}, 
    m_size{size} 
@@ -43,7 +47,13 @@ namespace stl {
    m_size{dynamic_array.m_size}
   {
    if constexpr (std::is_trivial_v<T>) {
-    this->m_data = reinterpret_cast<T*>(std::memcpy(new T[this->m_size], dynamic_array.m_data, this->m_size));
+    this->m_data = reinterpret_cast<T*>(
+     std::memcpy(
+      new T[this->m_size], 
+      dynamic_array.m_data, 
+      this->m_size * sizeof(T)
+     )
+    );
     return;
    }
    if constexpr (std::is_copy_assignable_v<T>) {
@@ -65,7 +75,10 @@ namespace stl {
   }
 
   explicit operator std::string_view() const {
-   return std::string_view{reinterpret_cast<char*>(this->m_data), this->m_size}; /* Includes null-terminator */
+   return std::string_view{
+    reinterpret_cast<char*>(this->m_data), 
+    this->m_size
+   }; /* Includes null-terminator */
   }
 
   template <class Self> auto&& operator[](this Self&& self, std::size_t const index) noexcept {
@@ -103,7 +116,13 @@ namespace stl {
   //Research perfect forwarding
   void push_back(T const& value) noexcept requires(std::is_trivial_v<T> || (std::is_move_assignable_v<T> && std::is_copy_assignable_v<T>) || std::is_copy_assignable_v<T>) {
    if constexpr (std::is_trivial_v<T>) {
-    auto new_data = std::memcpy(new T[this->m_size + 1], this->m_data, this->m_size);
+    auto const new_data = reinterpret_cast<T*>(
+     std::memcpy(
+      new T[this->m_size + 1], 
+      this->m_data, 
+      this->m_size * sizeof(T)
+     )
+    );
     delete[] this->m_data;
     this->m_data = new_data;
     this->m_data[this->m_size++] = value;
@@ -131,13 +150,27 @@ namespace stl {
    }
   }
 
-  operator std::span<T>() const noexcept { return std::span<T>{ m_data, m_size }; } 
-  operator std::span<T>() noexcept { return std::span<T>{ m_data, m_size }; }
+  operator std::span<T>() const noexcept { 
+   return std::span<T>{ 
+    m_data, 
+    m_size 
+   }; 
+  } 
+  operator std::span<T>() noexcept { 
+   return std::span<T>{ 
+    m_data, 
+    m_size 
+   }; 
+  }
 
   void grow(std::size_t const size) noexcept requires (std::is_trivial_v<T> || std::is_move_assignable_v<T> || std::is_copy_assignable_v<T>) {
    auto const new_data = new T[this->m_size + size];
    if constexpr (std::is_trivial_v<T>) {
-    std::memcpy(new_data, this->m_data, this->m_size);
+    (void)std::memcpy(
+     new_data, 
+     this->m_data, 
+     this->m_size * sizeof(T)
+    );
    } else {
     for (std::size_t i = 0; i < this->m_size; ++i) {
      if constexpr (std::is_move_assignable_v<T>) {
@@ -155,8 +188,16 @@ namespace stl {
    auto const new_data = new T[this->m_size + std::size(data)];
    
    if constexpr (std::is_trivial_v<T>) {
-    (void)std::memcpy(new_data, this->m_data, this->m_size);
-    (void)std::memcpy(new_data + this->m_size, reinterpret_cast<T*>(std::data(data)), std::size(data));
+    (void)std::memcpy(
+     new_data, 
+     this->m_data,
+     this->m_size * sizeof(T)
+    );
+    (void)std::memcpy(
+     new_data + this->m_size, 
+     reinterpret_cast<T*>(std::data(data)), 
+     std::size(data) * sizeof(T)
+    );
    } else {
     for (std::size_t i = 0; i < this->m_size; ++i) {
      if constexpr (std::is_move_assignable_v<T>) {
@@ -181,8 +222,13 @@ namespace stl {
   }
   void shrink(std::size_t const size) noexcept {
    /* Not yet movable */
-   auto const new_data = new T[this->m_size - size];
-   (void)std::memcpy(new_data, this->m_data, this->m_size - size);
+   auto const new_data = reinterpret_cast<T*>(
+    std::memcpy(
+     new T[this->m_size - size], 
+     this->m_data, 
+     (this->m_size - size) * sizeof(T)
+    )
+   );
    delete[] this->m_data;
    this->m_data = new_data;
    this->m_size -= size;
@@ -195,7 +241,10 @@ namespace stl {
   auto release() noexcept {
    auto data = this->m_data;
    this->m_data = nullptr;
-   return std::span{ data, this->m_size };
+   return std::span{ 
+    data, 
+    this->m_size 
+   };
   }
 
   template <class Self> auto begin(this Self&& self) noexcept {

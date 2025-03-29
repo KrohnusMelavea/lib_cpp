@@ -6,11 +6,11 @@
 #include "types.hpp"
 #include "tuple.hpp"
 #include "cstring.hpp"
-
+#include <typeinfo>
 namespace stl {
  template <class... Args>
  struct ctconfig {
-  char keys[sizeof...(Args)][32];
+  char keys[sizeof...(Args)][32]{};
   tuple<Args...> vals;
   template <std::size_t size, class Arg> consteval auto add(char const(&key)[size], Arg arg) const noexcept {
    ctconfig<Arg, Args...> config;
@@ -23,9 +23,9 @@ namespace stl {
     config.keys[0][i] = key[i];
    }
    for (std::size_t i = size; i < 32; ++i) {
-    config.keys[0][i] = 0;
+    config.keys[0][i] = '\0';
    }
-   config.vals.get_rest() = dynamic_cast<tuple_impl<Args...> const&>(this->vals);
+   config.vals.get_rest() = this->vals;
    config.vals.get_this() = std::forward<Arg>(arg);
    return config;
   }
@@ -49,10 +49,8 @@ namespace stl {
  };
  template <> struct ctconfig<> {
   template <std::size_t size, class Arg> consteval auto add(char const(&key)[size], Arg arg) const noexcept {
-   ctconfig<Arg> config {
-    .keys{},
-    .vals{ arg }
-   };
+   ctconfig<Arg> config;
+   config.vals.get<0>() = arg;
    for (std::size_t i = 0; i < size; ++i) {
     config.keys[0][i] = key[i];
    }
