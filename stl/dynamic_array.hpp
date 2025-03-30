@@ -234,6 +234,36 @@ namespace stl {
    this->m_size -= size;
   }
 
+  void truncate(std::size_t const size) noexcept {
+   auto const copy_size = (size < this->m_size) ? (size) : (this->m_size);
+   if constexpr (std::is_trivial_v<T>) {
+    auto const new_data = reinterpret_cast<T*>(
+     std::memcpy(
+      new T[size],
+      this->m_data,
+      copy_size * sizeof(T)
+     )
+    );
+    delete[] this->m_data;
+    this->m_data = new_data;
+    this->m_size = size;
+   } else {
+    auto const new_data = new T[size];
+    for (std::size_t i = 0; i < copy_size; ++i) {
+     if constexpr (std::is_move_assignable_v<T>) {
+      new_data[i] = std::move(this->m_data[i]);
+     } else if constexpr (std::is_copy_assignable_v<T>) {
+      new_data[i] = this->m_data[i];
+     } else {
+      static_assert(false, "T is not assignable");
+     }
+    }
+    delete[] this->m_data;
+    this->m_data = new_data;
+    this->m_size = size;
+   }
+  }
+
   void free() noexcept /* Does not free contents */ {
    delete[] this->m_data;
    this->m_data = nullptr;

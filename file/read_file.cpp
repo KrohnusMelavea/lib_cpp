@@ -9,6 +9,7 @@ namespace file {
   while (true) {
    auto result = reader.read(stl::buffer{std::data(buffer), std::size(buffer)});
    if (result.value > 0) [[likely]] {
+    if (result.value < std::size(buffer)) {}
     file_contents.grow(stl::buffer{std::data(buffer), result.value});
    } else [[unlikely]] {
     return file_contents;

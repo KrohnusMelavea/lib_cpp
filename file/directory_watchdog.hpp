@@ -13,7 +13,7 @@
 #include <string>
 
 namespace file {
- class super {
+ struct super {
   stl::dynamic_array<bool> m_file_exists;
  };
  
@@ -26,24 +26,33 @@ namespace file {
   directory_watchdog(std::string_view const directory) noexcept : 
    m_directory{directory} 
   {
+
   }
 
   auto begin() noexcept {
    thread_local auto directory_walker = walk_directory<config>(this->m_directory);
    this->m_directory_walker = walk_directory<config>(this->m_directory);
-   return directory_watchdog_iterator<config>::construct(
-    std::begin(this->m_directory_walker),
-    this->m_file_paths,
-    this->m_file_hashes
-   );
+   if constexpr (CHECK_CONFIG(config, "should_handle_deleted_files")) {
+    return directory_watchdog_iterator<config>::construct(
+     std::begin(this->m_directory_walker),
+     this->m_file_paths,
+     this->m_file_hashes,
+     this->m_file_exists
+    );
+   } else {
+    return directory_watchdog_iterator<config>::construct(
+     std::begin(this->m_directory_walker),
+     this->m_file_paths,
+     this->m_file_hashes
+    );
+   }
+   
   }
   auto end() noexcept {
    return iterator_sentinel{};
   }
 
  private:
-  static constexpr bool should_handle_deleted_files = false;
-
   std::string m_directory;
   directory_walker<config> m_directory_walker;
   stl::dynamic_array<std::string> m_file_paths;
