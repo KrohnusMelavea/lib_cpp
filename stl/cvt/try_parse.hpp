@@ -3,7 +3,7 @@
 #include "types.hpp"
 #include <optional>
 
-namespace net::cvt {
+namespace stl::cvt {
  constexpr std::optional<u32> try_parse_u32(auto const& str) noexcept {
   u32 n = 0;
   auto c_it = std::begin(str);

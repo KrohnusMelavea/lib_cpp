@@ -16,10 +16,10 @@ namespace file {
   stl::dynamic_array<bool> &m_file_exists;
   std::size_t m_existing_file_count;
  };
- template <stl::ctconfig config> static constexpr auto should_handle_deleted_files = CHECK_CONFIG(config, "should_handle_deleted_files");
+ template <stl::ctconfig config> static constexpr auto should_clean_state_on_delete = CHECK_CONFIG(config, "should_clean_state_on_delete");
  template <stl::ctconfig config>
  using this_super_t = std::conditional_t<
- should_handle_deleted_files<config>,
+  should_clean_state_on_delete<config>,
   this_super,
   empty
  >;
@@ -108,7 +108,7 @@ namespace file {
   }
   [[nodiscard]] bool operator==(iterator_sentinel const) const noexcept {
    if (this->iterator == iterator_sentinel{}) [[unlikely]] {
-    if constexpr (should_handle_deleted_files<config>) {
+    if constexpr (should_clean_state_on_delete<config>) {
      if (this->m_existing_file_count != std::size(this->file_paths)) [[unlikely]] {
       std::size_t new_size = 0; /* Also serves as a running pointer */
       for (std::size_t i = 0; i < std::size(this->file_paths); ++i) {
@@ -142,7 +142,7 @@ namespace file {
     if (it == std::end(this->file_paths)) [[unlikely]] /* New File Found */ {
      this->file_paths.push_back(std::string(file_path));
      this->file_hashes.push_back(file_hash);
-     if constexpr (should_handle_deleted_files<config>) {
+     if constexpr (should_clean_state_on_delete<config>) {
       this->m_file_exists.push_back(true);
       ++this->m_existing_file_count;
      }
@@ -151,7 +151,7 @@ namespace file {
     else [[likely]] /* Existing File */ {
      const auto file_index = it - std::begin(this->file_paths);
      auto& existing_file_hash = this->file_hashes[file_index];
-     if constexpr (should_handle_deleted_files<config>) {
+     if constexpr (should_clean_state_on_delete<config>) {
       this->m_file_exists[file_index] = true;
       ++this->m_existing_file_count;
      }
