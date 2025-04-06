@@ -7,8 +7,10 @@
 #include <functional>
 #include <string_view>
 
+#include <print>
+
 namespace stl::str {
- [[nodiscard]] inline constexpr std::size_t scan_until(std::string_view const s, std::size_t const ptr, std::function<bool(char const)>&& predicate) noexcept {
+ [[nodiscard]] inline constexpr std::size_t scan_until(std::string_view const s, std::size_t const ptr, std::function<bool(char const)> predicate) noexcept {
   for (auto&& c : s.substr(ptr)) {
    if (predicate(c)) {
     return static_cast<std::size_t>(&c - std::data(s));
