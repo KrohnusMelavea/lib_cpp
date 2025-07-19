@@ -2,7 +2,7 @@
 
 namespace file {
  byte_writer::byte_writer(std::string_view const file_path) noexcept {
-  auto const err = ::fopen_s(&m_file_handle, std::data(file_path), "wb");
+  auto const maybe_error = ::fopen_s(&m_file_handle, std::data(file_path), "wb");
  }
  byte_writer::byte_writer(std::FILE* const file_handle) noexcept : m_file_handle{file_handle} {}
 

@@ -88,7 +88,7 @@ namespace stl {
   auto& operator=(dynamic_array const& dynamic_array) noexcept requires(std::is_trivial_v<T> || std::is_copy_assignable_v<T>) {
    if constexpr (std::is_trivial_v<T>) {
     if (dynamic_array.m_size != this->m_size) {
-     delete[] this->m_size;
+     delete[] this->m_data;
      this->m_data = new T[dynamic_array.m_size];
      this->m_size = dynamic_array.m_size;
     }
@@ -97,7 +97,7 @@ namespace stl {
    }
    if constexpr (std::is_copy_assignable_v<T>) {
     if (dynamic_array.m_size != this->m_size) {
-     delete[] this->m_size;
+     delete[] this->m_data;
      this->m_data = new T[dynamic_array.m_size];
      this->m_size = dynamic_array.m_size;
     }
@@ -114,7 +114,7 @@ namespace stl {
   }
 
   //Research perfect forwarding
-  void push_back(T const& value) noexcept requires(std::is_trivial_v<T> || (std::is_move_assignable_v<T> && std::is_copy_assignable_v<T>) || std::is_copy_assignable_v<T>) {
+  void push_back(T const& value) noexcept requires(std::is_trivial_v<T> || std::is_copy_assignable_v<T>) {
    if constexpr (std::is_trivial_v<T>) {
     auto const new_data = reinterpret_cast<T*>(
      std::memcpy(
@@ -128,20 +128,20 @@ namespace stl {
     this->m_data[this->m_size++] = value;
     return;
    }
-   if constexpr (std::is_move_assignable_v<T> && std::is_copy_assignable_v<T>) {
+   if constexpr (std::is_copy_assignable_v<T> && !std::is_move_assignable_v<T>) {
     auto new_data = new T[this->m_size + 1];
     for (std::size_t i = 0; i < this->m_size; ++i) {
-     new_data[i] = std::move(this->m_data[i]);
+     new_data[i] = this->m_data[i];
     }
     delete[] this->m_data;
     this->m_data = new_data;
     this->m_data[this->m_size++] = value;
     return;
    }
-   if constexpr (std::is_copy_assignable_v<T>) {
+   if constexpr (std::is_move_assignable_v<T> && std::is_copy_assignable_v<T>) {
     auto new_data = new T[this->m_size + 1];
     for (std::size_t i = 0; i < this->m_size; ++i) {
-     new_data[i] = this->m_data[i];
+     new_data[i] = std::move(this->m_data[i]);
     }
     delete[] this->m_data;
     this->m_data = new_data;

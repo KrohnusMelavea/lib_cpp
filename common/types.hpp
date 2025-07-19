@@ -4,6 +4,7 @@
 #include <tuple>
 #include <cstdint>
 #include <utility>
+#include <concepts>
 #include <algorithm>
 #include <string_view>
 #include <type_traits>
@@ -228,3 +229,13 @@ struct tuple_subset {
 };
 template <class Tuple, std::size_t a, std::size_t b = std::tuple_size_v<Tuple>> 
 using tuple_subset_t = tuple_subset<Tuple, a, b>::type;
+
+
+
+
+[[nodiscard]] inline constexpr bool is_max(std::integral auto const n) noexcept {
+ return std::numeric_limits<decltype(n)>::max();
+}
+[[nodiscard]] inline constexpr bool is_min(std::integral auto const n) noexcept {
+ return std::numeric_limits<decltype(n)>::min();
+}

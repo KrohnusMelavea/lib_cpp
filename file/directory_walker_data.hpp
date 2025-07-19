@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "stl/dynamic_array.hpp"
 #include <array>
 #include <string_view>
 #include <windows.h>
@@ -15,6 +16,7 @@ namespace file {
   char file_path[256];
   std::size_t file_path_length;
   std::string_view directory;
+  stl::dynamic_array<u08> file_contents;
 
   static directory_walker_data& get_thread_instance() {
    thread_local directory_walker_data instance{};

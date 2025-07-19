@@ -5,7 +5,6 @@
 #include "meta/system_error_code.hpp"
 #include "iterator_sentinel.hpp"
 #include "stl/ctconfig.hpp"
-//#include <minwinbase.h>
 #include <array>
 #include <print>
 #include <string_view>
@@ -227,8 +226,9 @@ namespace file {
    auto&& directory_depth = directory_walker_data.directory_depth;
    auto&& file_path = directory_walker_data.file_path;
    auto&& file_path_length = directory_walker_data.file_path_length;
+   auto&& file_contents = directory_walker_data.file_contents;
 
-   return std::string_view{
+   return {
     file_path, 
     file_path_lengths[directory_depth] + file_path_length
    };

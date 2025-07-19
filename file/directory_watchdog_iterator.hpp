@@ -3,13 +3,16 @@
 #include "iterator_sentinel.hpp"
 #include "read_file.hpp"
 #include "directory_walker_iterator.hpp"
+#include "directory_watchdog_iterator_result.hpp"
 #include "stl/ctconfig.hpp"
+#include "stl/status_type.hpp"
 #include "stl/dynamic_array.hpp"
 #include "crypto/gen_sha256.hpp"
 #include <array>
 #include <print>
 #include <string>
 #include <ranges>
+#include <spdlog/spdlog.h>
 
 namespace file {
  struct this_super {
@@ -32,6 +35,7 @@ namespace file {
   stl::dynamic_array<std::string>& file_paths;
   stl::dynamic_array<std::array<u32, 8>>& file_hashes;
   std::string_view file_path;
+  stl::status_type<file::byte_reader::error_code, stl::dynamic_array<u08>> file_contents;
 
   static directory_watchdog_iterator<config> construct(
    directory_walker_iterator<config> iterator, 
@@ -65,13 +69,14 @@ namespace file {
   ) noexcept :
    iterator{iterator}, 
    file_paths{file_paths}, 
-   file_hashes{file_hashes}
+   file_hashes{file_hashes},
+   file_contents{file::byte_reader::error_code::unknown, stl::dynamic_array<u08>{}}
   {
-   this->scan_forward();
-   if (this->iterator == iterator_sentinel{}) {
-    return;
-   }
-   this->file_path = *(this->iterator);
+   // this->scan_forward();
+   // if (this->iterator == iterator_sentinel{}) {
+   //  return;
+   // }
+   //this->file_path = *this->iterator;
   }
   directory_watchdog_iterator(
    directory_walker_iterator<config> iterator, 
@@ -82,35 +87,27 @@ namespace file {
    this_super_t<config>{file_exists, 0},
    iterator{iterator},
    file_paths{file_paths},
-   file_hashes{file_hashes} 
+   file_hashes{file_hashes},
+   file_contents{file::byte_reader::error_code::unknown, stl::dynamic_array<u08>{}}
   {
-   this->file_path = *(this->iterator);
+   //this->file_path = *(this->iterator);
    std::fill(
     std::begin(this->m_file_exists),
     std::end(this->m_file_exists),
     false
    );
-   this->scan_forward();
-   if (this->iterator == iterator_sentinel{}) {
-    return;
-   }
+   //this->scan_forward();
+   // if (this->iterator == iterator_sentinel{}) {
+   //  return;
+   // }
   }
 
-  void operator++() noexcept {
-   ++this->iterator;
+  [[nodiscard]] bool operator==(iterator_sentinel const) noexcept {
    this->scan_forward();
-   if (this->iterator == iterator_sentinel{}) {
-    return;
-   }
-  }
-  [[nodiscard]] constexpr auto&& operator*() noexcept {
-   return this->file_path;
-  }
-  [[nodiscard]] bool operator==(iterator_sentinel const) const noexcept {
    if (this->iterator == iterator_sentinel{}) [[unlikely]] {
     if constexpr (should_clean_state_on_delete<config>) {
      if (this->m_existing_file_count != std::size(this->file_paths)) [[unlikely]] {
-      std::size_t new_size = 0; /* Also serves as a running pointer */
+      std::size_t new_size = 0;
       for (std::size_t i = 0; i < std::size(this->file_paths); ++i) {
        if (this->m_file_exists[i]) [[likely]] {
         this->file_paths[new_size] = std::move(this->file_paths[i]);
@@ -128,13 +125,32 @@ namespace file {
     return false;
    }
   }
-
+  [[nodiscard]] directory_watchdog_iterator_result operator*() noexcept {
+   return directory_watchdog_iterator_result{
+    this->file_path, 
+    std::span<u08>{ 
+     std::data(this->file_contents.value), 
+     std::size(this->file_contents.value) 
+    }
+   };
+  }
+  void operator++() noexcept {
+   ++this->iterator;
+   //this->scan_forward();
+   // if (this->iterator == iterator_sentinel{}) {
+   //  return;
+   // }
+  }
   void scan_forward() noexcept {
    while (this->iterator != iterator_sentinel{}) {
     this->file_path = *this->iterator;
-    auto const file_contents = read_file(file_path);
-    auto const file_hash = crypto::gen_sha256_impl(file_contents);
-    auto it = std::find(
+    this->file_contents = read_file(this->file_path);
+    if (this->file_contents.status != file::byte_reader::error_code::success && this->file_contents.status != file::byte_reader::error_code::eof) [[unlikely]] {
+     ++this->iterator;
+     continue; 
+    }
+    auto const file_hash = crypto::gen_sha256_impl(this->file_contents.value);
+    auto it = std::find( 
      std::begin(this->file_paths), 
      std::end(this->file_paths), 
      file_path
@@ -163,7 +179,6 @@ namespace file {
     ++this->iterator;
    }
   }
-
   [[nodiscard]] static constexpr bool hashes_equal(std::span<u32 const, 8> const lhs, std::span<u32 const, 8> const rhs) noexcept {
    return std::ranges::all_of(
     std::views::zip(lhs, rhs),

@@ -1,8 +1,13 @@
 #include "byte_reader.hpp"
+#include <spdlog/spdlog.h>
 
 namespace file {
  byte_reader::byte_reader(std::string_view const file_path) noexcept {
-  (void)::fopen_s(&this->m_file_handle, std::data(file_path), "rb");
+  errno_t status = ::fopen_s(&this->m_file_handle, std::data(file_path), "rb");
+  if (status != 0) [[unlikely]] {
+   SPDLOG_WARN("Failed to Open File: {}, {}", file_path, status);
+   this->m_file_handle = nullptr;
+  }
  }
  byte_reader::byte_reader(std::FILE* const file_handle) noexcept : 
   m_file_handle{file_handle} 
@@ -10,7 +15,9 @@ namespace file {
 
  }
  byte_reader::~byte_reader() noexcept {
-  (void)::fclose(this->m_file_handle);
+  if (this->m_file_handle != nullptr) [[unlikely]] {
+   (void)::fclose(this->m_file_handle);
+  }
  }
 
  stl::status_type<byte_reader::error_code, std::size_t> byte_reader::read(stl::buffer buffer) const noexcept {

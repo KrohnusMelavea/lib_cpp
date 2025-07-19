@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.12)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /O2 /arch:AVX2")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
+add_library(input_project 
+ ../input/mouse.cpp
+)
+target_include_directories(input_project PUBLIC
+ ../
+ ../common/
+)
+target_link_libraries(input_project
+ kernel32.lib
+)
+target_compile_definitions(input_project PRIVATE
+ NO_STRICT
+)
+install(TARGETS input_project
+ LIBRARY DESTINATION lib
+ ARCHIVE DESTINATION lib
+)
